@@ -1,0 +1,662 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		583BBAC9227E8BFF005D1199 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 583BBAC8227E8BFF005D1199 /* AppDelegate.m */; };
+		583BBACC227E8BFF005D1199 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 583BBACB227E8BFF005D1199 /* ViewController.m */; };
+		583BBAD1227E8C01005D1199 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 583BBAD0227E8C01005D1199 /* Assets.xcassets */; };
+		583BBAD4227E8C01005D1199 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 583BBAD2227E8C01005D1199 /* LaunchScreen.storyboard */; };
+		583BBAD7227E8C01005D1199 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 583BBAD6227E8C01005D1199 /* main.m */; };
+		583BBAE1227E8C01005D1199 /* MAGWebViewPluginTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 583BBAE0227E8C01005D1199 /* MAGWebViewPluginTests.m */; };
+		583BBAEC227E8C01005D1199 /* MAGWebViewPluginUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 583BBAEB227E8C01005D1199 /* MAGWebViewPluginUITests.m */; };
+		583BBAFC227E8DC6005D1199 /* MAGWebClientViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 583BBAFA227E8DC6005D1199 /* MAGWebClientViewController.m */; };
+		583BBB02227E8E6C005D1199 /* TestViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 583BBB01227E8E6C005D1199 /* TestViewController.m */; };
+		583BBB05227E8EE0005D1199 /* MAGWebView.m in Sources */ = {isa = PBXBuildFile; fileRef = 583BBB04227E8EE0005D1199 /* MAGWebView.m */; };
+		583BBB07227EC0F3005D1199 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 583BBB06227EC0F3005D1199 /* WebKit.framework */; };
+		770CCF5970354D9DE527572D /* libPods-MAGWebViewPlugin.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0E84B1B2147D8768B6EDEC3C /* libPods-MAGWebViewPlugin.a */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		583BBADD227E8C01005D1199 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 583BBABC227E8BFF005D1199 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 583BBAC3227E8BFF005D1199;
+			remoteInfo = MAGWebViewPlugin;
+		};
+		583BBAE8227E8C01005D1199 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 583BBABC227E8BFF005D1199 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 583BBAC3227E8BFF005D1199;
+			remoteInfo = MAGWebViewPlugin;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0E84B1B2147D8768B6EDEC3C /* libPods-MAGWebViewPlugin.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-MAGWebViewPlugin.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		583BBAC4227E8BFF005D1199 /* MAGWebViewPlugin.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MAGWebViewPlugin.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		583BBAC7227E8BFF005D1199 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		583BBAC8227E8BFF005D1199 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		583BBACA227E8BFF005D1199 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		583BBACB227E8BFF005D1199 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		583BBAD0227E8C01005D1199 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		583BBAD3227E8C01005D1199 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		583BBAD5227E8C01005D1199 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		583BBAD6227E8C01005D1199 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		583BBADC227E8C01005D1199 /* MAGWebViewPluginTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MAGWebViewPluginTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		583BBAE0227E8C01005D1199 /* MAGWebViewPluginTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MAGWebViewPluginTests.m; sourceTree = "<group>"; };
+		583BBAE2227E8C01005D1199 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		583BBAE7227E8C01005D1199 /* MAGWebViewPluginUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MAGWebViewPluginUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		583BBAEB227E8C01005D1199 /* MAGWebViewPluginUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MAGWebViewPluginUITests.m; sourceTree = "<group>"; };
+		583BBAED227E8C01005D1199 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		583BBAF9227E8DC6005D1199 /* MAGWebClientViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MAGWebClientViewController.h; sourceTree = "<group>"; };
+		583BBAFA227E8DC6005D1199 /* MAGWebClientViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MAGWebClientViewController.m; sourceTree = "<group>"; };
+		583BBB00227E8E6C005D1199 /* TestViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TestViewController.h; sourceTree = "<group>"; };
+		583BBB01227E8E6C005D1199 /* TestViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TestViewController.m; sourceTree = "<group>"; };
+		583BBB03227E8EE0005D1199 /* MAGWebView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MAGWebView.h; sourceTree = "<group>"; };
+		583BBB04227E8EE0005D1199 /* MAGWebView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MAGWebView.m; sourceTree = "<group>"; };
+		583BBB06227EC0F3005D1199 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
+		921B4135B9AA8E590B8737C2 /* Pods-MAGWebViewPlugin.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MAGWebViewPlugin.debug.xcconfig"; path = "Target Support Files/Pods-MAGWebViewPlugin/Pods-MAGWebViewPlugin.debug.xcconfig"; sourceTree = "<group>"; };
+		ABC30753AEFE993406204E47 /* Pods-MAGWebViewPlugin.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MAGWebViewPlugin.release.xcconfig"; path = "Target Support Files/Pods-MAGWebViewPlugin/Pods-MAGWebViewPlugin.release.xcconfig"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		583BBAC1227E8BFF005D1199 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				583BBB07227EC0F3005D1199 /* WebKit.framework in Frameworks */,
+				770CCF5970354D9DE527572D /* libPods-MAGWebViewPlugin.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		583BBAD9227E8C01005D1199 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		583BBAE4227E8C01005D1199 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		583BBABB227E8BFF005D1199 = {
+			isa = PBXGroup;
+			children = (
+				583BBAC6227E8BFF005D1199 /* MAGWebViewPlugin */,
+				583BBADF227E8C01005D1199 /* MAGWebViewPluginTests */,
+				583BBAEA227E8C01005D1199 /* MAGWebViewPluginUITests */,
+				583BBAC5227E8BFF005D1199 /* Products */,
+				639D7E40F4FB3D1D9F557252 /* Pods */,
+				5968EB6A31CE6D56FBE2E3BF /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		583BBAC5227E8BFF005D1199 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				583BBAC4227E8BFF005D1199 /* MAGWebViewPlugin.app */,
+				583BBADC227E8C01005D1199 /* MAGWebViewPluginTests.xctest */,
+				583BBAE7227E8C01005D1199 /* MAGWebViewPluginUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		583BBAC6227E8BFF005D1199 /* MAGWebViewPlugin */ = {
+			isa = PBXGroup;
+			children = (
+				583BBAFE227E8DD8005D1199 /* Plugin */,
+				583BBAFF227E8DE0005D1199 /* Controller */,
+				583BBAC7227E8BFF005D1199 /* AppDelegate.h */,
+				583BBAC8227E8BFF005D1199 /* AppDelegate.m */,
+				583BBACA227E8BFF005D1199 /* ViewController.h */,
+				583BBACB227E8BFF005D1199 /* ViewController.m */,
+				583BBAD0227E8C01005D1199 /* Assets.xcassets */,
+				583BBAD2227E8C01005D1199 /* LaunchScreen.storyboard */,
+				583BBAD5227E8C01005D1199 /* Info.plist */,
+				583BBAD6227E8C01005D1199 /* main.m */,
+			);
+			path = MAGWebViewPlugin;
+			sourceTree = "<group>";
+		};
+		583BBADF227E8C01005D1199 /* MAGWebViewPluginTests */ = {
+			isa = PBXGroup;
+			children = (
+				583BBAE0227E8C01005D1199 /* MAGWebViewPluginTests.m */,
+				583BBAE2227E8C01005D1199 /* Info.plist */,
+			);
+			path = MAGWebViewPluginTests;
+			sourceTree = "<group>";
+		};
+		583BBAEA227E8C01005D1199 /* MAGWebViewPluginUITests */ = {
+			isa = PBXGroup;
+			children = (
+				583BBAEB227E8C01005D1199 /* MAGWebViewPluginUITests.m */,
+				583BBAED227E8C01005D1199 /* Info.plist */,
+			);
+			path = MAGWebViewPluginUITests;
+			sourceTree = "<group>";
+		};
+		583BBAFE227E8DD8005D1199 /* Plugin */ = {
+			isa = PBXGroup;
+			children = (
+				583BBB03227E8EE0005D1199 /* MAGWebView.h */,
+				583BBB04227E8EE0005D1199 /* MAGWebView.m */,
+			);
+			path = Plugin;
+			sourceTree = "<group>";
+		};
+		583BBAFF227E8DE0005D1199 /* Controller */ = {
+			isa = PBXGroup;
+			children = (
+				583BBB00227E8E6C005D1199 /* TestViewController.h */,
+				583BBB01227E8E6C005D1199 /* TestViewController.m */,
+				583BBAF9227E8DC6005D1199 /* MAGWebClientViewController.h */,
+				583BBAFA227E8DC6005D1199 /* MAGWebClientViewController.m */,
+			);
+			path = Controller;
+			sourceTree = "<group>";
+		};
+		5968EB6A31CE6D56FBE2E3BF /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				583BBB06227EC0F3005D1199 /* WebKit.framework */,
+				0E84B1B2147D8768B6EDEC3C /* libPods-MAGWebViewPlugin.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		639D7E40F4FB3D1D9F557252 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				921B4135B9AA8E590B8737C2 /* Pods-MAGWebViewPlugin.debug.xcconfig */,
+				ABC30753AEFE993406204E47 /* Pods-MAGWebViewPlugin.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		583BBAC3227E8BFF005D1199 /* MAGWebViewPlugin */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 583BBAF0227E8C01005D1199 /* Build configuration list for PBXNativeTarget "MAGWebViewPlugin" */;
+			buildPhases = (
+				D26DCB30921BF81ED07D5011 /* [CP] Check Pods Manifest.lock */,
+				583BBAC0227E8BFF005D1199 /* Sources */,
+				583BBAC1227E8BFF005D1199 /* Frameworks */,
+				583BBAC2227E8BFF005D1199 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MAGWebViewPlugin;
+			productName = MAGWebViewPlugin;
+			productReference = 583BBAC4227E8BFF005D1199 /* MAGWebViewPlugin.app */;
+			productType = "com.apple.product-type.application";
+		};
+		583BBADB227E8C01005D1199 /* MAGWebViewPluginTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 583BBAF3227E8C01005D1199 /* Build configuration list for PBXNativeTarget "MAGWebViewPluginTests" */;
+			buildPhases = (
+				583BBAD8227E8C01005D1199 /* Sources */,
+				583BBAD9227E8C01005D1199 /* Frameworks */,
+				583BBADA227E8C01005D1199 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				583BBADE227E8C01005D1199 /* PBXTargetDependency */,
+			);
+			name = MAGWebViewPluginTests;
+			productName = MAGWebViewPluginTests;
+			productReference = 583BBADC227E8C01005D1199 /* MAGWebViewPluginTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		583BBAE6227E8C01005D1199 /* MAGWebViewPluginUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 583BBAF6227E8C01005D1199 /* Build configuration list for PBXNativeTarget "MAGWebViewPluginUITests" */;
+			buildPhases = (
+				583BBAE3227E8C01005D1199 /* Sources */,
+				583BBAE4227E8C01005D1199 /* Frameworks */,
+				583BBAE5227E8C01005D1199 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				583BBAE9227E8C01005D1199 /* PBXTargetDependency */,
+			);
+			name = MAGWebViewPluginUITests;
+			productName = MAGWebViewPluginUITests;
+			productReference = 583BBAE7227E8C01005D1199 /* MAGWebViewPluginUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		583BBABC227E8BFF005D1199 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1020;
+				ORGANIZATIONNAME = lyeah;
+				TargetAttributes = {
+					583BBAC3227E8BFF005D1199 = {
+						CreatedOnToolsVersion = 10.2;
+					};
+					583BBADB227E8C01005D1199 = {
+						CreatedOnToolsVersion = 10.2;
+						TestTargetID = 583BBAC3227E8BFF005D1199;
+					};
+					583BBAE6227E8C01005D1199 = {
+						CreatedOnToolsVersion = 10.2;
+						TestTargetID = 583BBAC3227E8BFF005D1199;
+					};
+				};
+			};
+			buildConfigurationList = 583BBABF227E8BFF005D1199 /* Build configuration list for PBXProject "MAGWebViewPlugin" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 583BBABB227E8BFF005D1199;
+			productRefGroup = 583BBAC5227E8BFF005D1199 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				583BBAC3227E8BFF005D1199 /* MAGWebViewPlugin */,
+				583BBADB227E8C01005D1199 /* MAGWebViewPluginTests */,
+				583BBAE6227E8C01005D1199 /* MAGWebViewPluginUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		583BBAC2227E8BFF005D1199 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				583BBAD4227E8C01005D1199 /* LaunchScreen.storyboard in Resources */,
+				583BBAD1227E8C01005D1199 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		583BBADA227E8C01005D1199 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		583BBAE5227E8C01005D1199 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		D26DCB30921BF81ED07D5011 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-MAGWebViewPlugin-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		583BBAC0227E8BFF005D1199 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				583BBAFC227E8DC6005D1199 /* MAGWebClientViewController.m in Sources */,
+				583BBB05227E8EE0005D1199 /* MAGWebView.m in Sources */,
+				583BBACC227E8BFF005D1199 /* ViewController.m in Sources */,
+				583BBAD7227E8C01005D1199 /* main.m in Sources */,
+				583BBAC9227E8BFF005D1199 /* AppDelegate.m in Sources */,
+				583BBB02227E8E6C005D1199 /* TestViewController.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		583BBAD8227E8C01005D1199 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				583BBAE1227E8C01005D1199 /* MAGWebViewPluginTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		583BBAE3227E8C01005D1199 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				583BBAEC227E8C01005D1199 /* MAGWebViewPluginUITests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		583BBADE227E8C01005D1199 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 583BBAC3227E8BFF005D1199 /* MAGWebViewPlugin */;
+			targetProxy = 583BBADD227E8C01005D1199 /* PBXContainerItemProxy */;
+		};
+		583BBAE9227E8C01005D1199 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 583BBAC3227E8BFF005D1199 /* MAGWebViewPlugin */;
+			targetProxy = 583BBAE8227E8C01005D1199 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		583BBAD2227E8C01005D1199 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				583BBAD3227E8C01005D1199 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		583BBAEE227E8C01005D1199 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		583BBAEF227E8C01005D1199 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		583BBAF1227E8C01005D1199 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 921B4135B9AA8E590B8737C2 /* Pods-MAGWebViewPlugin.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 8U2V26B5P4;
+				INFOPLIST_FILE = MAGWebViewPlugin/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lyeah.MAGWebViewPlugin;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		583BBAF2227E8C01005D1199 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = ABC30753AEFE993406204E47 /* Pods-MAGWebViewPlugin.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 8U2V26B5P4;
+				INFOPLIST_FILE = MAGWebViewPlugin/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lyeah.MAGWebViewPlugin;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		583BBAF4227E8C01005D1199 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 8U2V26B5P4;
+				INFOPLIST_FILE = MAGWebViewPluginTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lyeah.MAGWebViewPluginTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MAGWebViewPlugin.app/MAGWebViewPlugin";
+			};
+			name = Debug;
+		};
+		583BBAF5227E8C01005D1199 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 8U2V26B5P4;
+				INFOPLIST_FILE = MAGWebViewPluginTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lyeah.MAGWebViewPluginTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MAGWebViewPlugin.app/MAGWebViewPlugin";
+			};
+			name = Release;
+		};
+		583BBAF7227E8C01005D1199 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 8U2V26B5P4;
+				INFOPLIST_FILE = MAGWebViewPluginUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lyeah.MAGWebViewPluginUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MAGWebViewPlugin;
+			};
+			name = Debug;
+		};
+		583BBAF8227E8C01005D1199 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 8U2V26B5P4;
+				INFOPLIST_FILE = MAGWebViewPluginUITests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.lyeah.MAGWebViewPluginUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MAGWebViewPlugin;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		583BBABF227E8BFF005D1199 /* Build configuration list for PBXProject "MAGWebViewPlugin" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				583BBAEE227E8C01005D1199 /* Debug */,
+				583BBAEF227E8C01005D1199 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		583BBAF0227E8C01005D1199 /* Build configuration list for PBXNativeTarget "MAGWebViewPlugin" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				583BBAF1227E8C01005D1199 /* Debug */,
+				583BBAF2227E8C01005D1199 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		583BBAF3227E8C01005D1199 /* Build configuration list for PBXNativeTarget "MAGWebViewPluginTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				583BBAF4227E8C01005D1199 /* Debug */,
+				583BBAF5227E8C01005D1199 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		583BBAF6227E8C01005D1199 /* Build configuration list for PBXNativeTarget "MAGWebViewPluginUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				583BBAF7227E8C01005D1199 /* Debug */,
+				583BBAF8227E8C01005D1199 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 583BBABC227E8BFF005D1199 /* Project object */;
+}
