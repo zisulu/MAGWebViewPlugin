@@ -25,6 +25,20 @@ typedef NS_ENUM(NSUInteger, MAGWebViewNavigationType) {
     MAGWebViewNavigationTypeOther
 };
 
+typedef NS_OPTIONS(NSUInteger, MAGWebDataDetectorTypes) {
+    MAGWebDataDetectorTypeNone = 0,
+    MAGWebDataDetectorTypePhoneNumber = 1 << 0,
+    MAGWebDataDetectorTypeLink = 1 << 1,
+    MAGWebDataDetectorTypeAddress = 1 << 2,
+    MAGWebDataDetectorTypeCalendarEvent = 1 << 3,
+    MAGWebDataDetectorTypeTrackingNumber = 1 << 4,
+    MAGWebDataDetectorTypeFlightNumber = 1 << 5,
+    MAGWebDataDetectorTypeLookupSuggestion = 1 << 6,
+    MAGWebDataDetectorTypeAll = NSUIntegerMax,
+};
+
+UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
+
 @protocol MAGWebView;
 
 @protocol MAGWebViewDelegate <NSObject>
@@ -54,7 +68,23 @@ typedef NS_ENUM(NSUInteger, MAGWebViewNavigationType) {
  @param completionHandler must call this handler, otherwise -loadRequest will not be triggered, UserAgent will not be updated.
  if userAgent.length == 0, only trigger -loadRequest and will not update UserAgent.
  */
-- (void)webView:(id<MAGWebView>)webView userAgentUpdateWithRequestURL:(NSURL *)requestURL completionHandler:(void(^)(NSString *_Nullable userAgent))completionHandler;
+- (void)webView:(id<MAGWebView>)webView userAgentUpdateWithURL:(NSURL *)requestURL completionHandler:(void(^)(NSString *_Nullable userAgent))completionHandler;
+
+/**
+ When MAGWebViewDelegate will be reseted, it means UIWebView or WKWebView will be recreated;
+ 
+ @param webView MAGWebView
+ @param requestURL requestURL
+ */
+- (void)webView:(id<MAGWebView>)webView willResetWithURL:(NSURL *)requestURL;
+
+/**
+ When MAGWebViewDelegate is reseted, it means UIWebView or WKWebView is recreated;
+ 
+ @param webView MAGWebView
+ @param requestURL requestURL
+ */
+- (void)webView:(id<MAGWebView>)webView didResetWithURL:(NSURL *)requestURL;
 
 /**
  longPressGestureRecognizer on webView
@@ -114,6 +144,49 @@ typedef NS_ENUM(NSUInteger, MAGWebViewNavigationType) {
 
 @end
 
+@interface MAGWebViewConfiguration : NSObject
+
+/**
+ The default value is YES.
+ */
+@property (nonatomic) BOOL allowsInlineMediaPlayback;
+
+/**
+ The default value is NO.
+ */
+@property (nonatomic) BOOL mediaPlaybackRequiresUserAction;
+
+/**
+ The default value is YES.
+ */
+@property (nonatomic) BOOL mediaPlaybackAllowsAirPlay;
+
+/**
+ An enum value indicating the type of data detection desired.
+ @discussion The default value is MAGWebDataDetectorTypePhoneNumber|MAGWebDataDetectorTypeLink.
+ */
+@property (nonatomic) MAGWebDataDetectorTypes dataDetectorTypes;
+
+/*
+ A Boolean value indicating whether the web view suppresses
+ content rendering until it is fully loaded into memory.
+ @discussion The default value is NO.
+ */
+@property (nonatomic) BOOL suppressesIncrementalRendering;
+
+/*
+ The preference settings to be used by the WKWebView.
+ javaScriptCanOpenWindowsAutomatically is YES by default.
+ */
+@property (nonatomic, strong) WKPreferences *preferences;
+
+/*
+ The user content controller to associate with the WKWebView.
+ */
+@property (nonatomic, strong) WKUserContentController *userContentController;
+
+@end
+
 /**
  Feature            UIWebView       WKWebView
  JS执行速度             慢               快
@@ -125,7 +198,7 @@ typedef NS_ENUM(NSUInteger, MAGWebViewNavigationType) {
  */
 @interface MAGWebView : UIView<MAGWebView>
 
-@property (nullable, nonatomic, weak) id<MAGWebViewDelegate> delegate;
+@property (nonatomic, weak) id<MAGWebViewDelegate> delegate;
 
 /**
  UIWebView or WKWebView
@@ -133,17 +206,9 @@ typedef NS_ENUM(NSUInteger, MAGWebViewNavigationType) {
 @property (nonatomic, strong, readonly) id webView;
 
 /**
- No delegate, No javascriptBridge;
- Relay on WebViewJavascriptBridge or WKWebViewJavascriptBridge;
+ longPressGestureRecognizer related to UIWebView or WKWebView
  */
-@property (nullable, nonatomic, strong, readonly) id javascriptBridge;
-
 @property (nonatomic, strong, readonly) UILongPressGestureRecognizer *longPressGestureRecognizer;
-
-/**
- window.location.href
- */
-@property (nullable, nonatomic, copy, readonly) NSString *locationHref;
 
 /**
  if don't use -initWithWebViewType to initialize, MAGWebView will init default type:
@@ -154,6 +219,8 @@ typedef NS_ENUM(NSUInteger, MAGWebViewNavigationType) {
  3.iOS 12.0 ~ support WKWebView only
  */
 @property (nonatomic, assign) MAGWebContext webContext;
+
+@property (nonatomic, strong) MAGWebViewConfiguration *configuration;
 
 - (instancetype)initWithWebContext:(MAGWebContext)webContext;
 

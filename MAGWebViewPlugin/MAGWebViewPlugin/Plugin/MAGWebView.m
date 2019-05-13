@@ -7,15 +7,27 @@
 //
 
 #import "MAGWebView.h"
-#import <Masonry/Masonry.h>
-#import <WebViewJavascriptBridge/WebViewJavascriptBridge.h>
-#import <WebViewJavascriptBridge/WKWebViewJavascriptBridge.h>
+#import "Masonry.h"
 
 static NSString * const kMAGWebViewProgressKVO                  = @"estimatedProgress";
 static NSString * const kMAGWKWebCookies                        = @"com.lyeah.wkwebcookies";
 
 static NSString * const kMAGWebViewTitleJavascript              = @"document.title";
-static NSString * const kMAGWebViewHrefJavascript               = @"window.location.href";
+
+MAGWebContext MAGWebViewInitialContext(void)
+{
+    MAGWebContext webContext = MAGWebContextUIKit;
+    if (@available(iOS 9.0, *)) {
+        if (@available(iOS 12.0, *)) {
+            webContext = MAGWebContextWebKit;
+        } else {
+            webContext = MAGWebContextWebKit;
+        }
+    } else {
+        webContext = MAGWebContextUIKit;
+    }
+    return webContext;
+}
 
 @implementation MAGProcessPool
 
@@ -31,6 +43,28 @@ static NSString * const kMAGWebViewHrefJavascript               = @"window.locat
 
 @end
 
+@implementation MAGWebViewConfiguration
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        _allowsInlineMediaPlayback = YES;
+        _mediaPlaybackRequiresUserAction = NO;
+        _mediaPlaybackAllowsAirPlay = YES;
+        _dataDetectorTypes = MAGWebDataDetectorTypePhoneNumber | MAGWebDataDetectorTypeLink;
+        _suppressesIncrementalRendering = NO;
+        WKUserContentController *userContentController = [[WKUserContentController alloc] init];
+        _userContentController = userContentController;
+        WKPreferences *preferences = [[WKPreferences alloc] init];
+        preferences.javaScriptCanOpenWindowsAutomatically = YES;
+        _preferences = preferences;
+    }
+    return self;
+}
+
+@end
+
 @interface MAGWebView ()<UIWebViewDelegate, WKNavigationDelegate, WKUIDelegate, UIGestureRecognizerDelegate>
 
 @property (nonatomic, copy, readwrite, nullable) NSString *title;
@@ -40,9 +74,7 @@ static NSString * const kMAGWebViewHrefJavascript               = @"window.locat
 @property (nonatomic, assign) BOOL internal_scalesPageToFit;
 
 @property (nonatomic, strong, readwrite) id webView;
-@property (nullable, nonatomic, strong, readwrite) id javascriptBridge;
 @property (nonatomic, strong, readwrite) UILongPressGestureRecognizer *longPressGestureRecognizer;
-@property (nonatomic, copy, readwrite, nullable) NSString *locationHref;
 
 @end
 
@@ -52,8 +84,9 @@ static NSString * const kMAGWebViewHrefJavascript               = @"window.locat
 {
     self = [super initWithCoder:aDecoder];
     if (self) {
-        _webContext = [self initialWebContext];
-        [self setupWebView];
+        _webContext = MAGWebViewInitialContext();
+        _configuration = [[MAGWebViewConfiguration alloc] init];
+        [self internal_setupWebView];
     }
     return self;
 }
@@ -62,8 +95,9 @@ static NSString * const kMAGWebViewHrefJavascript               = @"window.locat
 {
     self = [super initWithFrame:frame];
     if (self) {
-        _webContext = [self initialWebContext];
-        [self setupWebView];
+        _webContext = MAGWebViewInitialContext();
+        _configuration = [[MAGWebViewConfiguration alloc] init];
+        [self internal_setupWebView];
     }
     return self;
 }
@@ -73,40 +107,30 @@ static NSString * const kMAGWebViewHrefJavascript               = @"window.locat
     self = [super initWithFrame:CGRectZero];
     if (self) {
         _webContext = webContext;
-        [self setupWebView];
+        _configuration = [[MAGWebViewConfiguration alloc] init];
+        [self internal_setupWebView];
     }
     return self;
-}
-
-- (MAGWebContext)initialWebContext
-{
-    MAGWebContext webContext = MAGWebContextUIKit;
-    if (@available(iOS 9.0, *)) {
-        if (@available(iOS 12.0, *)) {
-            webContext = MAGWebContextWebKit;
-        } else {
-            webContext = MAGWebContextWebKit;
-        }
-    } else {
-        webContext = MAGWebContextUIKit;
-    }
-    return webContext;
 }
 
 - (void)setWebContext:(MAGWebContext)webContext
 {
     if (_webContext == webContext) return;
     _webContext = webContext;
-    [self setupWebView];
+    [self internal_setupWebView];
 }
 
-- (void)setupWebView
+- (void)setConfiguration:(MAGWebViewConfiguration *)configuration
 {
-    if (self.webView) {
-        [self.webView removeFromSuperview];
-        self.webView = nil;
+    _configuration = configuration;
+    if (!_configuration) {
+        _configuration = [[MAGWebViewConfiguration alloc] init];
     }
-    self.javascriptBridge = nil;
+    [self internal_setupWebView];
+}
+
+- (void)internal_setupWebView
+{
     if ([self isUIWebView]) {
         [self initUIWebView];
     } else {
@@ -116,14 +140,35 @@ static NSString * const kMAGWebViewHrefJavascript               = @"window.locat
     [self addWebLongPressRecognizer];
 }
 
+- (void)internal_resetWebViewWithURL:(NSURL *)requestURL
+{
+    if (self.delegate && [self.delegate respondsToSelector:@selector(webView:willResetWithURL:)]) {
+        [self.delegate webView:self willResetWithURL:requestURL];
+    }
+    if (self.webView) {
+        [self.webView removeFromSuperview];
+        self.webView = nil;
+    }
+    //重新添加
+    [self internal_setupWebView];
+    //重置代理
+    if (self.delegate) {
+        [self setDelegate:self.delegate];
+    }
+    if (self.delegate && [self.delegate respondsToSelector:@selector(webView:didResetWithURL:)]) {
+        [self.delegate webView:self didResetWithURL:requestURL];
+    }
+}
+
 - (void)initUIWebView
 {
     UIWebView *webView = [[UIWebView alloc] initWithFrame:self.bounds];
     webView.opaque = NO;
     webView.clipsToBounds = NO;
-    webView.allowsInlineMediaPlayback = YES;
-    webView.mediaPlaybackRequiresUserAction = NO;
+    webView.allowsInlineMediaPlayback = _configuration.allowsInlineMediaPlayback;
+    webView.mediaPlaybackRequiresUserAction = _configuration.mediaPlaybackRequiresUserAction;
     webView.keyboardDisplayRequiresUserAction = NO;
+    webView.dataDetectorTypes = (NSUInteger)_configuration.dataDetectorTypes;
     webView.backgroundColor = [UIColor clearColor];
     UIScrollView *scrollView = webView.scrollView;
     scrollView.clipsToBounds = NO;
@@ -140,19 +185,21 @@ static NSString * const kMAGWebViewHrefJavascript               = @"window.locat
 - (void)initWKWebView
 {
     WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
-    WKUserContentController *userContentController = [[WKUserContentController alloc] init];
-    configuration.userContentController = userContentController;
-    WKPreferences *preferences = [[WKPreferences alloc] init];
-    preferences.javaScriptCanOpenWindowsAutomatically = YES;
-    configuration.preferences = preferences;
+    configuration.userContentController = _configuration.userContentController;
+    configuration.preferences = _configuration.preferences;
     configuration.processPool = [MAGProcessPool sharedProcessPool];
-    configuration.allowsInlineMediaPlayback = YES;
+    configuration.allowsInlineMediaPlayback = _configuration.allowsInlineMediaPlayback;
     if (@available(iOS 10.0, *)) {
-        configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeNone;
+        configuration.dataDetectorTypes = (NSUInteger)_configuration.dataDetectorTypes;
+        if (_configuration.mediaPlaybackRequiresUserAction) {
+            configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeAll;
+        } else {
+            configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeNone;
+        }
     } else if (@available(iOS 9.0, *)) {
-        configuration.requiresUserActionForMediaPlayback = NO;
+        configuration.requiresUserActionForMediaPlayback = _configuration.mediaPlaybackRequiresUserAction;
     } else {
-        configuration.mediaPlaybackRequiresUserAction = NO;
+        configuration.mediaPlaybackRequiresUserAction = _configuration.mediaPlaybackRequiresUserAction;
     }
     WKWebView *webView = [[WKWebView alloc] initWithFrame:self.bounds configuration:configuration];
     webView.opaque = NO;
@@ -231,8 +278,12 @@ static NSString * const kMAGWebViewHrefJavascript               = @"window.locat
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context
 {
     if ([keyPath isEqualToString:kMAGWebViewProgressKVO]) {
-        self.estimatedProgress = [change[NSKeyValueChangeNewKey] doubleValue];
-        [self internal_webViewDidUpdateProgress:self.estimatedProgress];
+        if (object == self.webView) {
+            self.estimatedProgress = [change[NSKeyValueChangeNewKey] doubleValue];
+            [self internal_webViewDidUpdateProgress:self.estimatedProgress];
+        } else {
+            [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+        }
     }
 }
 
@@ -242,18 +293,10 @@ static NSString * const kMAGWebViewHrefJavascript               = @"window.locat
     if ([self isUIWebView]) {
         UIWebView *webView = [self uiWebView];
         webView.delegate = self;
-        [WebViewJavascriptBridge enableLogging];
-        WebViewJavascriptBridge *javascriptBridge = [WebViewJavascriptBridge bridgeForWebView:webView];
-        [javascriptBridge setWebViewDelegate:self];
-        self.javascriptBridge = javascriptBridge;
     } else {
         WKWebView *webView = [self wkWebView];
         webView.UIDelegate = self;
         webView.navigationDelegate = self;
-        [WKWebViewJavascriptBridge enableLogging];
-        WKWebViewJavascriptBridge *javascriptBridge = [WKWebViewJavascriptBridge bridgeForWebView:webView];
-        [javascriptBridge setWebViewDelegate:self];
-        self.javascriptBridge = javascriptBridge;
     }
 }
 
@@ -325,12 +368,22 @@ static NSString * const kMAGWebViewHrefJavascript               = @"window.locat
 
 - (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error
 {
-    [self internal_webViewDidFailLoadWithError:error];
+    if ([self internal_webViewShouldHandleURLWithError:error]) {
+        [self internal_webViewHandleURLWithError:error];
+        [self internal_webViewDidFinishLoad];
+    } else {
+        [self internal_webViewDidFailLoadWithError:error];
+    }
 }
 
 - (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error
 {
-    [self internal_webViewDidFailLoadWithError:error];
+    if ([self internal_webViewShouldHandleURLWithError:error]) {
+        [self internal_webViewHandleURLWithError:error];
+        [self internal_webViewDidFinishLoad];
+    } else {
+        [self internal_webViewDidFailLoadWithError:error];
+    }
 }
 
 - (void)webViewWebContentProcessDidTerminate:(WKWebView *)webView
@@ -368,10 +421,6 @@ static NSString * const kMAGWebViewHrefJavascript               = @"window.locat
 
 - (void)internal_webViewDidFinishLoad
 {
-    __weak typeof(self)wself = self;
-    [self evaluateJavaScript:kMAGWebViewHrefJavascript completionHandler:^(id  _Nullable response, NSError * _Nullable error) {
-        wself.locationHref = response;
-    }];
     if (self.delegate && [self.delegate respondsToSelector:@selector(webViewDidFinishLoad:)]) {
         [self.delegate webViewDidFinishLoad:self];
     }
@@ -379,12 +428,58 @@ static NSString * const kMAGWebViewHrefJavascript               = @"window.locat
 
 - (void)internal_webViewDidStartLoad
 {
-    __weak typeof(self)wself = self;
-    [self evaluateJavaScript:kMAGWebViewHrefJavascript completionHandler:^(id  _Nullable response, NSError * _Nullable error) {
-        wself.locationHref = response;
-    }];
     if (self.delegate && [self.delegate respondsToSelector:@selector(webViewDidStartLoad:)]) {
         [self.delegate webViewDidStartLoad:self];
+    }
+}
+
+- (NSArray<NSString *> *)internal_webViewSupportedHosts
+{
+    return @[
+             @"itunes.apple.com",
+             @"itunesconnect.apple.com",
+             @"appstoreconnect.apple.com",
+             ];
+}
+
+- (BOOL)internal_webViewShouldHandleURLWithError:(NSError *)error
+{
+    BOOL result = NO;
+    NSString *failedUrl = error.userInfo[NSURLErrorFailingURLStringErrorKey];
+    if ([failedUrl isKindOfClass:[NSString class]]) {
+        NSURL *failedURL = [NSURL URLWithString:failedUrl];
+        if (failedURL) {
+            NSString *failedScheme = failedURL.scheme;
+            NSString *failedHost = failedURL.host;
+            if (failedScheme.length > 0) {
+                if ([failedScheme hasPrefix:@"http"]) {
+                    NSArray<NSString *> *supportedHosts = [self internal_webViewSupportedHosts];
+                    if (failedHost.length > 0) {
+                        result = [supportedHosts containsObject:failedHost];
+                    }
+                } else {
+                    //tel, sms, mailto etc.
+                    result = YES;
+                }
+            }
+        }
+    }
+    return result;
+}
+
+- (void)internal_webViewHandleURLWithError:(NSError *)error
+{
+    NSString *failedUrl = error.userInfo[NSURLErrorFailingURLStringErrorKey];
+    NSURL *failedURL = [NSURL URLWithString:failedUrl];
+    UIApplication *application = [UIApplication sharedApplication];
+    if ([application canOpenURL:failedURL]) {
+        if (@available(iOS 10.0, *)) {
+            [application openURL:failedURL options:@{} completionHandler:^(BOOL success) {
+                
+            }];
+        } else {
+            [application openURL:failedURL];
+        }
     }
 }
 
@@ -455,15 +550,15 @@ static NSString * const kMAGWebViewHrefJavascript               = @"window.locat
 
 - (void)loadRequest:(NSURLRequest *)request
 {
-    BOOL shouldUserAgentUpdate = self.delegate && [self.delegate respondsToSelector:@selector(webView:userAgentUpdateWithRequestURL:completionHandler:)];
+    BOOL shouldUserAgentUpdate = self.delegate && [self.delegate respondsToSelector:@selector(webView:userAgentUpdateWithURL:completionHandler:)];
     if (shouldUserAgentUpdate) {
         __weak typeof(self)wself = self;
-        [self.delegate webView:self userAgentUpdateWithRequestURL:request.URL completionHandler:^(NSString * _Nullable userAgent) {
+        [self.delegate webView:self userAgentUpdateWithURL:request.URL completionHandler:^(NSString * _Nullable userAgent) {
             if (userAgent.length > 0) {
                 [wself syncUserAgent:userAgent];
                 //UIWebView只有首次初始化才能更新UserAgent
                 if ([wself isUIWebView]) {
-                    [wself setupWebView];
+                    [wself internal_resetWebViewWithURL:request.URL];
                 }
             }
             [wself internal_loadRequest:request];
@@ -517,15 +612,15 @@ static NSString * const kMAGWebViewHrefJavascript               = @"window.locat
 
 - (void)loadHTMLString:(NSString *)string baseURL:(nullable NSURL *)baseURL
 {
-    BOOL shouldUserAgentUpdate = self.delegate && [self.delegate respondsToSelector:@selector(webView:userAgentUpdateWithRequestURL:completionHandler:)];
+    BOOL shouldUserAgentUpdate = self.delegate && [self.delegate respondsToSelector:@selector(webView:userAgentUpdateWithURL:completionHandler:)];
     if (shouldUserAgentUpdate && baseURL) {
         __weak typeof(self)wself = self;
-        [self.delegate webView:self userAgentUpdateWithRequestURL:baseURL completionHandler:^(NSString * _Nullable userAgent) {
+        [self.delegate webView:self userAgentUpdateWithURL:baseURL completionHandler:^(NSString * _Nullable userAgent) {
             if (userAgent.length > 0) {
                 [wself syncUserAgent:userAgent];
                 //UIWebView只有首次初始化才能更新UserAgent
                 if ([wself isUIWebView]) {
-                    [wself setupWebView];
+                    [wself internal_resetWebViewWithURL:baseURL];
                 }
             }
             [wself internal_loadHTMLString:string baseURL:baseURL];
@@ -780,7 +875,6 @@ static NSString * const kMAGWebViewHrefJavascript               = @"window.locat
         [webView stopLoading];
         [webView removeFromSuperview];
     }
-    self.javascriptBridge = nil;
 }
 
 @end

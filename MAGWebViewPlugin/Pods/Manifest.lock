@@ -1,20 +1,24 @@
 PODS:
   - Masonry (1.1.0)
+  - MJRefresh (3.1.16)
   - WebViewJavascriptBridge (6.0.3)
 
 DEPENDENCIES:
   - Masonry (= 1.1.0)
+  - MJRefresh (= 3.1.16)
   - WebViewJavascriptBridge (~> 6.0)
 
 SPEC REPOS:
   https://github.com/cocoapods/specs.git:
     - Masonry
+    - MJRefresh
     - WebViewJavascriptBridge
 
 SPEC CHECKSUMS:
   Masonry: 678fab65091a9290e40e2832a55e7ab731aad201
+  MJRefresh: 7798e16e53a5ef7f332dd05b27664db4e29530fd
   WebViewJavascriptBridge: 7f5bc4d3581e672e8f32bd0f812d54bc69bb8e29
 
-PODFILE CHECKSUM: 06031346eaa6851fbe9b7edcf99451584d559ad0
+PODFILE CHECKSUM: 4244a28614197c477ab1ad93663bb6a028fdf24f
 
-COCOAPODS: 1.6.1
+COCOAPODS: 1.6.0
