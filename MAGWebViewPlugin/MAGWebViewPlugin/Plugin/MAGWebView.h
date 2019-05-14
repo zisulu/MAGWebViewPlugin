@@ -96,48 +96,6 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 
 @end
 
-@protocol MAGWebView <NSObject>
-
-@property (nonatomic, strong, readonly) UIScrollView *scrollView;
-@property (nullable, nonatomic, copy, readonly) NSString *title;
-@property (nullable, nonatomic, strong, readonly) NSURLRequest *originRequest;
-@property (nullable, nonatomic, strong, readonly) NSURLRequest *currentRequest;
-@property (nullable, nonatomic, strong, readonly) NSURL *URL;
-@property (nonatomic, assign, readonly, getter=isLoading) BOOL loading;
-@property (nonatomic, assign, readonly) BOOL canGoBack;
-@property (nonatomic, assign, readonly) BOOL canGoForward;
-@property (nonatomic, readonly) double estimatedProgress;
-@property (nonatomic, assign) BOOL scalesPageToFit;
-
-- (void)loadRequest:(NSURLRequest *)request;
-- (void)loadHTMLString:(NSString *)string baseURL:(nullable NSURL *)baseURL;
-- (void)loadData:(NSData *)data MIMEType:(NSString *)MIMEType textEncodingName:(NSString *)textEncodingName baseURL:(NSURL *)baseURL;
-
-- (void)reload;
-- (void)reloadFromOrigin;
-- (void)stopLoading;
-
-- (void)goBack;
-- (void)goForward;
-- (void)gobackWithStep:(NSInteger)step;
-
-- (NSInteger)countOfHistory;
-
-/**
- UIWebView or WKWebView support both
- For UIWebView is sync
- for WKWebView is async
- */
-- (void)evaluateJavaScript:(NSString *)javaScriptString
-         completionHandler:(void (^ _Nullable)(id _Nullable response, NSError *_Nullable error))completionHandler;
-
-/**
- For UIWebView only
- */
-- (NSString *)stringByEvaluatingJavaScriptFromString:(NSString *)javaScriptString;
-
-@end
-
 @interface MAGProcessPool : WKProcessPool
 
 + (instancetype)sharedProcessPool;
@@ -187,18 +145,49 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 
 @end
 
-/**
- Feature            UIWebView       WKWebView
- JS执行速度             慢               快
- 内存占用               大               小
- 进度条                无               有
- Cookie             自动存储         需手动存储
- 缓存                 有               无
- NSURLProtocol拦截    可以              不可以
- */
-@interface MAGWebView : UIView<MAGWebView>
+@protocol MAGWebView <NSObject>
 
-@property (nonatomic, weak) id<MAGWebViewDelegate> delegate;
+/// System
+
+@property (nonatomic, strong, readonly) UIScrollView *scrollView;
+@property (nullable, nonatomic, copy, readonly) NSString *title;
+@property (nullable, nonatomic, strong, readonly) NSURLRequest *originRequest;
+@property (nullable, nonatomic, strong, readonly) NSURLRequest *currentRequest;
+@property (nullable, nonatomic, strong, readonly) NSURL *URL;
+@property (nonatomic, assign, readonly, getter=isLoading) BOOL loading;
+@property (nonatomic, assign, readonly) BOOL canGoBack;
+@property (nonatomic, assign, readonly) BOOL canGoForward;
+@property (nonatomic, readonly) double estimatedProgress;
+@property (nonatomic, assign) BOOL scalesPageToFit;
+
+- (void)loadRequest:(NSURLRequest *)request;
+- (void)loadHTMLString:(NSString *)string baseURL:(nullable NSURL *)baseURL;
+- (void)loadData:(NSData *)data MIMEType:(NSString *)MIMEType textEncodingName:(NSString *)textEncodingName baseURL:(NSURL *)baseURL;
+
+- (void)reload;
+- (void)reloadFromOrigin;
+- (void)stopLoading;
+
+- (void)goBack;
+- (void)goForward;
+- (void)gobackWithStep:(NSInteger)step;
+
+- (NSInteger)countOfHistory;
+
+/**
+ UIWebView or WKWebView support both
+ For UIWebView is sync
+ for WKWebView is async
+ */
+- (void)evaluateJavaScript:(NSString *)javaScriptString
+         completionHandler:(void (^ _Nullable)(id _Nullable response, NSError *_Nullable error))completionHandler;
+
+/**
+ For UIWebView only
+ */
+- (NSString *)stringByEvaluatingJavaScriptFromString:(NSString *)javaScriptString;
+
+/// Custom
 
 /**
  UIWebView or WKWebView
@@ -218,9 +207,26 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
  -You can change webViewType to switch after init, but must before call any methods.
  3.iOS 12.0 ~ support WKWebView only
  */
-@property (nonatomic, assign) MAGWebContext webContext;
+@property (nonatomic, assign, readonly) MAGWebContext webContext;
+- (void)setWebContext:(MAGWebContext)webContext;
 
-@property (nonatomic, strong) MAGWebViewConfiguration *configuration;
+@property (nonatomic, strong, readonly) MAGWebViewConfiguration *configuration;
+- (void)setConfiguration:(MAGWebViewConfiguration *)configuration;
+
+@end
+
+/**
+ Feature            UIWebView       WKWebView
+ JS执行速度             慢               快
+ 内存占用               大               小
+ 进度条                无               有
+ Cookie             自动存储         需手动存储
+ 缓存                 有               无
+ NSURLProtocol拦截    可以              不可以
+ */
+@interface MAGWebView : UIView<MAGWebView>
+
+@property (nonatomic, weak) id<MAGWebViewDelegate> delegate;
 
 - (instancetype)initWithWebContext:(MAGWebContext)webContext;
 

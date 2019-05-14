@@ -75,6 +75,8 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 @property (nonatomic, strong, readwrite) id webView;
 @property (nonatomic, strong, readwrite) UILongPressGestureRecognizer *longPressGestureRecognizer;
+@property (nonatomic, assign, readwrite) MAGWebContext webContext;
+@property (nonatomic, strong, readwrite) MAGWebViewConfiguration *configuration;
 
 @end
 
