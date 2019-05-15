@@ -115,22 +115,6 @@ MAGWebContext MAGWebViewInitialContext(void)
     return self;
 }
 
-- (void)setWebContext:(MAGWebContext)webContext
-{
-    if (_webContext == webContext) return;
-    _webContext = webContext;
-    [self internal_setupWebView];
-}
-
-- (void)setConfiguration:(MAGWebViewConfiguration *)configuration
-{
-    _configuration = configuration;
-    if (!_configuration) {
-        _configuration = [[MAGWebViewConfiguration alloc] init];
-    }
-    [self internal_setupWebView];
-}
-
 - (void)internal_setupWebView
 {
     if ([self isUIWebView]) {
@@ -142,21 +126,18 @@ MAGWebContext MAGWebViewInitialContext(void)
     [self addWebLongPressRecognizer];
 }
 
+- (void)internal_resetWebView
+{
+    [self internal_resetWebViewWithURL:nil];
+}
+
 - (void)internal_resetWebViewWithURL:(NSURL *)requestURL
 {
-    if (self.delegate && [self.delegate respondsToSelector:@selector(webView:willResetWithURL:)]) {
-        [self.delegate webView:self willResetWithURL:requestURL];
-    }
     if (self.webView) {
         [self.webView removeFromSuperview];
         self.webView = nil;
     }
-    //重新添加
     [self internal_setupWebView];
-    //重置代理
-    if (self.delegate) {
-        [self setDelegate:self.delegate];
-    }
     if (self.delegate && [self.delegate respondsToSelector:@selector(webView:didResetWithURL:)]) {
         [self.delegate webView:self didResetWithURL:requestURL];
     }
@@ -164,19 +145,21 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 - (void)initUIWebView
 {
+    MAGWebViewConfiguration *magConfiguration = _configuration;
     UIWebView *webView = [[UIWebView alloc] initWithFrame:self.bounds];
     webView.opaque = NO;
     webView.clipsToBounds = NO;
-    webView.allowsInlineMediaPlayback = _configuration.allowsInlineMediaPlayback;
-    webView.mediaPlaybackRequiresUserAction = _configuration.mediaPlaybackRequiresUserAction;
+    webView.allowsInlineMediaPlayback = magConfiguration.allowsInlineMediaPlayback;
+    webView.mediaPlaybackRequiresUserAction = magConfiguration.mediaPlaybackRequiresUserAction;
     webView.keyboardDisplayRequiresUserAction = NO;
-    webView.dataDetectorTypes = (NSUInteger)_configuration.dataDetectorTypes;
+    webView.dataDetectorTypes = (NSUInteger)magConfiguration.dataDetectorTypes;
     webView.backgroundColor = [UIColor clearColor];
     UIScrollView *scrollView = webView.scrollView;
     scrollView.clipsToBounds = NO;
     scrollView.keyboardDismissMode = UIScrollViewKeyboardDismissModeInteractive;
     scrollView.decelerationRate = UIScrollViewDecelerationRateNormal;
     scrollView.scrollsToTop = YES;
+    webView.delegate = self;
     [self addSubview:webView];
     [webView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.edges.equalTo(self);
@@ -186,22 +169,23 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 - (void)initWKWebView
 {
+    MAGWebViewConfiguration *magConfiguration = _configuration;
     WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
-    configuration.userContentController = _configuration.userContentController;
-    configuration.preferences = _configuration.preferences;
+    configuration.userContentController = magConfiguration.userContentController;
+    configuration.preferences = magConfiguration.preferences;
     configuration.processPool = [MAGProcessPool sharedProcessPool];
-    configuration.allowsInlineMediaPlayback = _configuration.allowsInlineMediaPlayback;
+    configuration.allowsInlineMediaPlayback = magConfiguration.allowsInlineMediaPlayback;
     if (@available(iOS 10.0, *)) {
-        configuration.dataDetectorTypes = (NSUInteger)_configuration.dataDetectorTypes;
-        if (_configuration.mediaPlaybackRequiresUserAction) {
+        configuration.dataDetectorTypes = (NSUInteger)magConfiguration.dataDetectorTypes;
+        if (magConfiguration.mediaPlaybackRequiresUserAction) {
             configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeAll;
         } else {
             configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeNone;
         }
     } else if (@available(iOS 9.0, *)) {
-        configuration.requiresUserActionForMediaPlayback = _configuration.mediaPlaybackRequiresUserAction;
+        configuration.requiresUserActionForMediaPlayback = magConfiguration.mediaPlaybackRequiresUserAction;
     } else {
-        configuration.mediaPlaybackRequiresUserAction = _configuration.mediaPlaybackRequiresUserAction;
+        configuration.mediaPlaybackRequiresUserAction = magConfiguration.mediaPlaybackRequiresUserAction;
     }
     WKWebView *webView = [[WKWebView alloc] initWithFrame:self.bounds configuration:configuration];
     webView.opaque = NO;
@@ -217,6 +201,8 @@ MAGWebContext MAGWebViewInitialContext(void)
         WKHTTPCookieStore *cookieStore = webView.configuration.websiteDataStore.httpCookieStore;
         [WKWebView syncCookies:cookieStore];
     }
+    webView.UIDelegate = self;
+    webView.navigationDelegate = self;
     [self addSubview:webView];
     [webView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.edges.equalTo(self);
@@ -241,14 +227,14 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
 {
-    if ([otherGestureRecognizer isKindOfClass:[UILongPressGestureRecognizer class]]) {
+    if ([otherGestureRecognizer isKindOfClass:[UILongPressGestureRecognizer class]] && otherGestureRecognizer == self.longPressGestureRecognizer) {
         return YES;
     } else {
         return NO;
     }
 }
 
-- (void)syncUserAgent:(NSString *)userAgent
+- (void)internal_syncUserAgent:(NSString *)userAgent
 {
     if (![userAgent isKindOfClass:[NSString class]]) return;
     NSDictionary *userAgentValues = @{
@@ -283,22 +269,7 @@ MAGWebContext MAGWebViewInitialContext(void)
         if (object == self.webView) {
             self.estimatedProgress = [change[NSKeyValueChangeNewKey] doubleValue];
             [self internal_webViewDidUpdateProgress:self.estimatedProgress];
-        } else {
-            [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
         }
-    }
-}
-
-- (void)setDelegate:(id<MAGWebViewDelegate>)delegate
-{
-    _delegate = delegate;
-    if ([self isUIWebView]) {
-        UIWebView *webView = [self uiWebView];
-        webView.delegate = self;
-    } else {
-        WKWebView *webView = [self wkWebView];
-        webView.UIDelegate = self;
-        webView.navigationDelegate = self;
     }
 }
 
@@ -345,7 +316,6 @@ MAGWebContext MAGWebViewInitialContext(void)
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationResponse:(WKNavigationResponse *)navigationResponse decisionHandler:(void (^)(WKNavigationResponsePolicy))decisionHandler
 {
     if (@available(iOS 12.0, *)) {
-        // iOS 11 也有这种获取方式，但是 iOS 11 可以在response里面直接获取到，只有 iOS 12 获取不到
         WKHTTPCookieStore *cookieStore = webView.configuration.websiteDataStore.httpCookieStore;
         [cookieStore getAllCookies:^(NSArray<NSHTTPCookie *> * _Nonnull cookies) {
             [webView insertCookies:cookies];
@@ -557,9 +527,9 @@ MAGWebContext MAGWebViewInitialContext(void)
         __weak typeof(self)wself = self;
         [self.delegate webView:self userAgentUpdateWithURL:request.URL completionHandler:^(NSString * _Nullable userAgent) {
             if (userAgent.length > 0) {
-                [wself syncUserAgent:userAgent];
-                //UIWebView只有首次初始化才能更新UserAgent
+                [wself internal_syncUserAgent:userAgent];
                 if ([wself isUIWebView]) {
+                    //UIWebView need reset
                     [wself internal_resetWebViewWithURL:request.URL];
                 }
             }
@@ -619,9 +589,9 @@ MAGWebContext MAGWebViewInitialContext(void)
         __weak typeof(self)wself = self;
         [self.delegate webView:self userAgentUpdateWithURL:baseURL completionHandler:^(NSString * _Nullable userAgent) {
             if (userAgent.length > 0) {
-                [wself syncUserAgent:userAgent];
-                //UIWebView只有首次初始化才能更新UserAgent
+                [wself internal_syncUserAgent:userAgent];
                 if ([wself isUIWebView]) {
+                    //UIWebView need reset
                     [wself internal_resetWebViewWithURL:baseURL];
                 }
             }
@@ -648,6 +618,15 @@ MAGWebContext MAGWebViewInitialContext(void)
     } else {
         if (@available(iOS 9.0, *)) {
             [[self wkWebView] loadData:data MIMEType:MIMEType characterEncodingName:textEncodingName baseURL:baseURL];
+        }
+    }
+}
+
+- (void)loadFileURL:(NSURL *)URL allowingReadAccessToURL:(NSURL *)readAccessURL
+{
+    if ([self isWKWebView]) {
+        if (@available(iOS 9.0, *)) {
+            [[self wkWebView] loadFileURL:URL allowingReadAccessToURL:readAccessURL];
         }
     }
 }

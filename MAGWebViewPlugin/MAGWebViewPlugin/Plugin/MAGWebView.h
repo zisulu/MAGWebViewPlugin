@@ -45,20 +45,24 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 
 @optional
 
-//General WebView begin
 - (BOOL)webView:(id<MAGWebView>)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(MAGWebViewNavigationType)navigationType;
 - (void)webViewDidStartLoad:(id<MAGWebView>)webView;
 - (void)webViewDidFinishLoad:(id<MAGWebView>)webView;
 - (void)webView:(id<MAGWebView>)webView didFailLoadWithError:(NSError *)error;
-//General WebView end
 
-//Only WKWebView begin
 - (void)webView:(id<MAGWebView>)webView didUpdateProgress:(CGFloat)progress;
 - (void)webViewWebContentProcessDidTerminate:(id<MAGWebView>)webView;
 - (void)webView:(id<MAGWebView>)webView showAlertWithMessage:(NSString *)message completionHandler:(void (^)(void))completionHandler;
 - (void)webView:(id<MAGWebView>)webView showConfirmAlertWithMessage:(NSString *)message completionHandler:(void (^)(BOOL result))completionHandler;
 - (void)webView:(id<MAGWebView>)webView showTextInputAlertWithMessage:(NSString *)message placeholder:(NSString *)placeholder completionHandler:(void (^)(NSString *result))completionHandler;
-//Only WKWebView end
+
+/**
+ Do something after the UIWebView or WKWebView has been recreated.
+ 
+ @param webView MAGWebView
+ @param requestURL requestURL
+ */
+- (void)webView:(id<MAGWebView>)webView didResetWithURL:(NSURL *)requestURL;
 
 /**
  Used for update the whole UserAgent if needed.
@@ -66,25 +70,8 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
  @param webView MAGWebView
  @param requestURL requestURL
  @param completionHandler must call this handler, otherwise -loadRequest will not be triggered, UserAgent will not be updated.
- if userAgent.length == 0, only trigger -loadRequest and will not update UserAgent.
  */
 - (void)webView:(id<MAGWebView>)webView userAgentUpdateWithURL:(NSURL *)requestURL completionHandler:(void(^)(NSString *_Nullable userAgent))completionHandler;
-
-/**
- When MAGWebViewDelegate will be reseted, it means UIWebView or WKWebView will be recreated;
- 
- @param webView MAGWebView
- @param requestURL requestURL
- */
-- (void)webView:(id<MAGWebView>)webView willResetWithURL:(NSURL *)requestURL;
-
-/**
- When MAGWebViewDelegate is reseted, it means UIWebView or WKWebView is recreated;
- 
- @param webView MAGWebView
- @param requestURL requestURL
- */
-- (void)webView:(id<MAGWebView>)webView didResetWithURL:(NSURL *)requestURL;
 
 /**
  longPressGestureRecognizer on webView
@@ -162,7 +149,17 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 
 - (void)loadRequest:(NSURLRequest *)request;
 - (void)loadHTMLString:(NSString *)string baseURL:(nullable NSURL *)baseURL;
+
+/**
+ For UIWebView: iOS 8.0 and later
+ For WKWebView: iOS 9.0 and later
+ */
 - (void)loadData:(NSData *)data MIMEType:(NSString *)MIMEType textEncodingName:(NSString *)textEncodingName baseURL:(NSURL *)baseURL;
+
+/**
+ For WKWebView Only
+ */
+- (void)loadFileURL:(NSURL *)URL allowingReadAccessToURL:(NSURL *)readAccessURL API_AVAILABLE(ios(9.0));
 
 - (void)reload;
 - (void)reloadFromOrigin;
@@ -195,12 +192,7 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 @property (nonatomic, strong, readonly) id webView;
 
 /**
- longPressGestureRecognizer related to UIWebView or WKWebView
- */
-@property (nonatomic, strong, readonly) UILongPressGestureRecognizer *longPressGestureRecognizer;
-
-/**
- if don't use -initWithWebViewType to initialize, MAGWebView will init default type:
+ if don't use -initWithWebContext to initialize, MAGWebView will init default type:
  1.iOS 8.x support UIWebView only
  2.iOS 9.0 - iOS 11.x
  -UIWebView or WKWebView support both，default use WKWebView.
@@ -208,10 +200,16 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
  3.iOS 12.0 ~ support WKWebView only
  */
 @property (nonatomic, assign, readonly) MAGWebContext webContext;
-- (void)setWebContext:(MAGWebContext)webContext;
 
+/**
+ Common configuration
+ */
 @property (nonatomic, strong, readonly) MAGWebViewConfiguration *configuration;
-- (void)setConfiguration:(MAGWebViewConfiguration *)configuration;
+
+/**
+ longPressGestureRecognizer related to UIWebView or WKWebView
+ */
+@property (nonatomic, strong, readonly) UILongPressGestureRecognizer *longPressGestureRecognizer;
 
 @end
 
