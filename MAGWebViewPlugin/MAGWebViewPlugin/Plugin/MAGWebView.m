@@ -588,10 +588,8 @@ MAGWebContext MAGWebViewInitialContext(void)
         [self.delegate webView:self userAgentUpdateWithURL:baseURL completionHandler:^(NSString * _Nullable userAgent) {
             if (userAgent.length > 0) {
                 [wself internal_syncUserAgent:userAgent];
-                if ([wself isUIWebView]) {
-                    //UIWebView need reset
-                    [wself internal_resetWebViewWithURL:baseURL];
-                }
+                //WebView need reset
+                [wself internal_resetWebViewWithURL:baseURL];
             }
             [wself internal_loadHTMLString:string baseURL:baseURL];
         }];
