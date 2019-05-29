@@ -134,6 +134,10 @@ MAGWebContext MAGWebViewInitialContext(void)
 - (void)internal_resetWebViewWithURL:(NSURL *)requestURL
 {
     if (self.webView) {
+        if ([self isWKWebView]) {
+            //remove KVO, avoid crash
+            [[self wkWebView] removeObserver:self forKeyPath:kMAGWebViewProgressKVO];
+        }
         [self.webView removeFromSuperview];
         self.webView = nil;
     }
@@ -875,7 +879,7 @@ MAGWebContext MAGWebViewInitialContext(void)
         }
         NSHTTPCookieStorage *sharedCookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
         [sharedCookieStorage setCookie:cookie];
-        NSMutableArray<NSHTTPCookie *> *localCookies = [NSKeyedUnarchiver unarchiveObjectWithData:[[NSUserDefaults standardUserDefaults] objectForKey:kMAGWKWebCookies]];
+        NSArray<NSHTTPCookie *> *localCookies = [NSKeyedUnarchiver unarchiveObjectWithData:[[NSUserDefaults standardUserDefaults] objectForKey:kMAGWKWebCookies]];
         NSMutableArray<NSHTTPCookie *> *latestCookies = [NSMutableArray array];
         for (NSInteger i=0;i<localCookies.count;i++) {
             NSHTTPCookie *tempCookie = localCookies[i];
@@ -885,7 +889,7 @@ MAGWebContext MAGWebViewInitialContext(void)
             [latestCookies addObject:tempCookie];
         }
         [latestCookies addObject:cookie];
-        NSData *cookiesData = [NSKeyedArchiver archivedDataWithRootObject:latestCookies];
+        NSData *cookiesData = [NSKeyedArchiver archivedDataWithRootObject:[latestCookies copy]];
         [[NSUserDefaults standardUserDefaults] setObject:cookiesData forKey:kMAGWKWebCookies];
         [[NSUserDefaults standardUserDefaults] synchronize];
     }
@@ -907,7 +911,7 @@ MAGWebContext MAGWebViewInitialContext(void)
         NSHTTPCookieStorage *sharedCookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
         [mutableCookies addObjectsFromArray:sharedCookieStorage.cookies];
         //获取自定义存储的cookies
-        NSMutableArray<NSHTTPCookie *> *localCookies = [NSKeyedUnarchiver unarchiveObjectWithData:[[NSUserDefaults standardUserDefaults] objectForKey:kMAGWKWebCookies]];
+        NSArray<NSHTTPCookie *> *localCookies = [NSKeyedUnarchiver unarchiveObjectWithData:[[NSUserDefaults standardUserDefaults] objectForKey:kMAGWKWebCookies]];
         NSMutableArray<NSHTTPCookie *> *latestCookies = [NSMutableArray array];
         for (NSInteger i=0;i<localCookies.count;i++) {
             NSHTTPCookie *cookie = localCookies[i];
@@ -923,7 +927,7 @@ MAGWebContext MAGWebViewInitialContext(void)
             }
         }
         //存储最新有效的cookies
-        NSData *cookiesData = [NSKeyedArchiver archivedDataWithRootObject:latestCookies];
+        NSData *cookiesData = [NSKeyedArchiver archivedDataWithRootObject:[latestCookies copy]];
         [[NSUserDefaults standardUserDefaults] setObject:cookiesData forKey:kMAGWKWebCookies];
         [[NSUserDefaults standardUserDefaults] synchronize];
         return mutableCookies;
