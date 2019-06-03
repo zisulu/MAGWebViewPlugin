@@ -575,11 +575,11 @@ MAGWebContext MAGWebViewInitialContext(void)
     NSDictionary<NSString *, NSString *> *cookieData = [NSHTTPCookie requestHeaderFieldsWithCookies:[WKWebView sharedCookieStorage]];
     if (cookieData.count > 0) {
         NSMutableDictionary<NSString *, NSString *> *mutableFields = [NSMutableDictionary dictionary];
-        if (request.allHTTPHeaderFields) {
-            mutableFields = [request.allHTTPHeaderFields mutableCopy];
+        if (fixedRequest.allHTTPHeaderFields) {
+            mutableFields = [fixedRequest.allHTTPHeaderFields mutableCopy];
+            [mutableFields setValuesForKeysWithDictionary:cookieData];
+            fixedRequest.allHTTPHeaderFields = [mutableFields copy];
         }
-        [mutableFields setValuesForKeysWithDictionary:cookieData];
-        fixedRequest.allHTTPHeaderFields = [mutableFields copy];
     }
     return fixedRequest;
 }
