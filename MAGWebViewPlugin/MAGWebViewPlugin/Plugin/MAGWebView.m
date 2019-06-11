@@ -59,8 +59,32 @@ MAGWebContext MAGWebViewInitialContext(void)
         WKPreferences *preferences = [[WKPreferences alloc] init];
         preferences.javaScriptCanOpenWindowsAutomatically = YES;
         _preferences = preferences;
+        _customWhiteSchemes = [self internal_customWhiteSchemes];
+        _customWhiteHttpHosts = [self internal_customWhiteHttpHosts];
+        
     }
     return self;
+}
+
+- (NSArray<NSString *> *)internal_customWhiteSchemes
+{
+    return @[
+             @"http",
+             @"https",
+             @"tel",
+             @"sms",
+             @"mailto",
+             @"itms-services",
+             ];
+}
+
+- (NSArray<NSString *> *)internal_customWhiteHttpHosts
+{
+    return @[
+             @"itunes.apple.com",
+             @"itunesconnect.apple.com",
+             @"appstoreconnect.apple.com",
+             ];
 }
 
 @end
@@ -344,8 +368,8 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 - (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error
 {
-    if ([self internal_webViewShouldHandleURLWithError:error]) {
-        [self internal_webViewHandleURLWithError:error];
+    if ([self internal_webViewShouldHandleExternalURLWithError:error]) {
+        [self internal_webViewHandleExternalURLWithError:error];
         [self internal_webViewDidFinishLoad];
     } else {
         [self internal_webViewDidFailLoadWithError:error];
@@ -354,8 +378,8 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 - (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error
 {
-    if ([self internal_webViewShouldHandleURLWithError:error]) {
-        [self internal_webViewHandleURLWithError:error];
+    if ([self internal_webViewShouldHandleExternalURLWithError:error]) {
+        [self internal_webViewHandleExternalURLWithError:error];
         [self internal_webViewDidFinishLoad];
     } else {
         [self internal_webViewDidFailLoadWithError:error];
@@ -409,16 +433,7 @@ MAGWebContext MAGWebViewInitialContext(void)
     }
 }
 
-- (NSArray<NSString *> *)internal_webViewSupportedHosts
-{
-    return @[
-             @"itunes.apple.com",
-             @"itunesconnect.apple.com",
-             @"appstoreconnect.apple.com",
-             ];
-}
-
-- (BOOL)internal_webViewShouldHandleURLWithError:(NSError *)error
+- (BOOL)internal_webViewShouldHandleExternalURLWithError:(NSError *)error
 {
     BOOL result = NO;
     NSString *failedUrl = error.userInfo[NSURLErrorFailingURLStringErrorKey];
@@ -429,7 +444,7 @@ MAGWebContext MAGWebViewInitialContext(void)
             NSString *failedHost = failedURL.host;
             if (failedScheme.length > 0) {
                 if ([failedScheme hasPrefix:@"http"]) {
-                    NSArray<NSString *> *supportedHosts = [self internal_webViewSupportedHosts];
+                    NSArray<NSString *> *supportedHosts = [self.configuration customWhiteHttpHosts];
                     if (failedHost.length > 0) {
                         result = [supportedHosts containsObject:failedHost];
                     }
@@ -443,19 +458,42 @@ MAGWebContext MAGWebViewInitialContext(void)
     return result;
 }
 
-- (void)internal_webViewHandleURLWithError:(NSError *)error
+- (void)internal_webViewHandleExternalURLWithError:(NSError *)error
 {
     NSString *failedUrl = error.userInfo[NSURLErrorFailingURLStringErrorKey];
     NSURL *failedURL = [NSURL URLWithString:failedUrl];
-    UIApplication *application = [UIApplication sharedApplication];
-    if ([application canOpenURL:failedURL]) {
-        if (@available(iOS 10.0, *)) {
-            [application openURL:failedURL options:@{} completionHandler:^(BOOL success) {
-                
-            }];
+    if ([self internal_canOpenExternalURL:failedURL]) {
+        NSArray *whiteSchemes = [self.configuration customWhiteSchemes];
+        if ([whiteSchemes containsObject:failedURL.scheme]) {
+            [self internal_openExternalURL:failedURL];
         } else {
-            [application openURL:failedURL];
+            if (self.delegate && [self.delegate respondsToSelector:@selector(webView:openExternalURL:completionHandler:)]) {
+                __weak typeof(self)wself = self;
+                [self.delegate webView:self openExternalURL:failedURL completionHandler:^(BOOL result) {
+                    if (result) {
+                        [wself internal_openExternalURL:failedURL];
+                    }
+                }];
+            }
         }
+    }
+}
+
+- (BOOL)internal_canOpenExternalURL:(NSURL *)openURL
+{
+    UIApplication *application = [UIApplication sharedApplication];
+    return [application canOpenURL:openURL];
+}
+
+- (void)internal_openExternalURL:(NSURL *)openURL
+{
+    UIApplication *application = [UIApplication sharedApplication];
+    if (@available(iOS 10.0, *)) {
+        [application openURL:openURL options:@{} completionHandler:^(BOOL success) {
+            
+        }];
+    } else {
+        [application openURL:openURL];
     }
 }
 

@@ -81,6 +81,15 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
  */
 - (void)webView:(id<MAGWebView>)webView longPressGestureRecognized:(UILongPressGestureRecognizer *)longPressGestureRecognizer;
 
+/**
+ Some links like sms, tel, mailto, itms-services, 
+
+ @param webView MAGWebView
+ @param externalURL externalURL
+ @param completionHandler completionHandler
+ */
+- (void)webView:(id<MAGWebView>)webView openExternalURL:(NSURL *)externalURL completionHandler:(void (^)(BOOL result))completionHandler;
+
 @end
 
 @interface MAGProcessPool : WKProcessPool
@@ -129,6 +138,20 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
  The user content controller to associate with the WKWebView.
  */
 @property (nonatomic, strong) WKUserContentController *userContentController;
+
+/**
+ An array contains white schemes.
+ Default contain @"http", @"https", @"tel", @"sms", @"mailto", @"itms-services"
+ */
+@property (nonatomic, copy) NSArray<NSString *> *customWhiteSchemes;
+
+/**
+ An array contains white http or https hosts.
+ Default contain @"itunes.apple.com",
+                 @"itunesconnect.apple.com",
+                 @"appstoreconnect.apple.com"
+ */
+@property (nonatomic, copy) NSArray<NSString *> *customWhiteHttpHosts;
 
 @end
 

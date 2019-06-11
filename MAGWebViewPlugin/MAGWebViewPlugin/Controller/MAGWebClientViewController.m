@@ -27,12 +27,17 @@
     // Do any additional setup after loading the view from its nib.
     MAGWebView *webView = [[MAGWebView alloc] init];
     webView.delegate = self;
+//    NSArray *whiteSchemes = webView.configuration.customWhiteSchemes;
+//    NSMutableArray *mutableList = [NSMutableArray arrayWithArray:whiteSchemes];
+//    [mutableList addObject:@"customscheme"];
+//    webView.configuration.customWhiteSchemes = [mutableList copy];
+//    webView.configuration.customWhiteSchemes = @[];
     [self.view addSubview:webView];
     [webView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.edges.equalTo(self.view);
     }];
     self.webView = webView;
-    NSURL *requestURL = [NSURL URLWithString:@"https://www.baidu.com"];
+    NSURL *requestURL = [NSURL URLWithString:@"https://fir.im/magoa"];
     NSURLRequest *request = [NSURLRequest requestWithURL:requestURL];
     [self.webView loadRequest:request];
     //注册jsBridge
@@ -107,16 +112,63 @@
 - (void)webView:(id<MAGWebView>)webView showAlertWithMessage:(nonnull NSString *)message completionHandler:(nonnull void (^)(void))completionHandler
 {
     //Use UIAlertController or Custom alert View
+    UIAlertController * alertController = [UIAlertController alertControllerWithTitle:@"提示" message:message preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction * cancelAction = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+        completionHandler();
+    }];
+    [alertController addAction:cancelAction];
+    [self presentViewController:alertController animated:YES completion:nil];
 }
 
 - (void)webView:(id<MAGWebView>)webView showConfirmAlertWithMessage:(nonnull NSString *)message completionHandler:(nonnull void (^)(BOOL))completionHandler
 {
     //Use UIAlertController or Custom alert View
+    UIAlertController * alertController = [UIAlertController alertControllerWithTitle:@"提示" message:message preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction * cancelAction = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+        completionHandler(NO);
+    }];
+    [alertController addAction:cancelAction];
+    UIAlertAction * doneAction = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        completionHandler(YES);
+    }];
+    [alertController addAction:doneAction];
+    [self presentViewController:alertController animated:YES completion:nil];
 }
 
 - (void)webView:(id<MAGWebView>)webView showTextInputAlertWithMessage:(nonnull NSString *)message placeholder:(nonnull NSString *)placeholder completionHandler:(nonnull void (^)(NSString * _Nonnull))completionHandler
 {
     //Use UIAlertController or Custom alert View
+    UIAlertController * alertController = [UIAlertController alertControllerWithTitle:@"提示" message:message preferredStyle:UIAlertControllerStyleAlert];
+    [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField){
+        textField.placeholder = placeholder;
+    }];
+    UIAlertAction * cancelAction = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+        
+    }];
+    [alertController addAction:cancelAction];
+    UIAlertAction * doneAction = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        UITextField *textField = alertController.textFields.lastObject;
+        completionHandler(textField.text);
+    }];
+    [alertController addAction:doneAction];
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+
+- (void)webView:(id<MAGWebView>)webView openExternalURL:(NSURL *)externalURL completionHandler:(void (^)(BOOL))completionHandler
+{
+    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
+    NSString *appName = [infoDictionary objectForKey:@"CFBundleDisplayName"];
+    NSString *message = [NSString stringWithFormat:@"即将离开%@，唤起其他应用", appName];
+    UIAlertController * alertController = [UIAlertController alertControllerWithTitle:@"提示" message:message preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction * cancelAction = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+        completionHandler(NO);
+    }];
+    [alertController addAction:cancelAction];
+    UIAlertAction * doneAction = [UIAlertAction actionWithTitle:@"允许" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        completionHandler(YES);
+    }];
+    [alertController addAction:doneAction];
+    [self presentViewController:alertController animated:YES completion:nil];
 }
 
 @end
