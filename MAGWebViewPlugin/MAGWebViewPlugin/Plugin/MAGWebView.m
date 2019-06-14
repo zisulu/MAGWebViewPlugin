@@ -453,6 +453,9 @@ MAGWebContext MAGWebViewInitialContext(void)
                     result = YES;
                 }
             }
+            if (result) {
+                result = [self internal_canOpenExternalURL:failedURL];
+            }
         }
     }
     return result;
@@ -462,19 +465,17 @@ MAGWebContext MAGWebViewInitialContext(void)
 {
     NSString *failedUrl = error.userInfo[NSURLErrorFailingURLStringErrorKey];
     NSURL *failedURL = [NSURL URLWithString:failedUrl];
-    if ([self internal_canOpenExternalURL:failedURL]) {
-        NSArray *whiteSchemes = [self.configuration customWhiteSchemes];
-        if ([whiteSchemes containsObject:failedURL.scheme]) {
-            [self internal_openExternalURL:failedURL];
-        } else {
-            if (self.delegate && [self.delegate respondsToSelector:@selector(webView:openExternalURL:completionHandler:)]) {
-                __weak typeof(self)wself = self;
-                [self.delegate webView:self openExternalURL:failedURL completionHandler:^(BOOL result) {
-                    if (result) {
-                        [wself internal_openExternalURL:failedURL];
-                    }
-                }];
-            }
+    NSArray *whiteSchemes = [self.configuration customWhiteSchemes];
+    if ([whiteSchemes containsObject:failedURL.scheme]) {
+        [self internal_openExternalURL:failedURL];
+    } else {
+        if (self.delegate && [self.delegate respondsToSelector:@selector(webView:openExternalURL:completionHandler:)]) {
+            __weak typeof(self)wself = self;
+            [self.delegate webView:self openExternalURL:failedURL completionHandler:^(BOOL result) {
+                if (result) {
+                    [wself internal_openExternalURL:failedURL];
+                }
+            }];
         }
     }
 }
