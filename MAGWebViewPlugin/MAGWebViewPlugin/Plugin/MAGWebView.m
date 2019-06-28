@@ -1020,6 +1020,23 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 + (void)clearCaches
 {
+    //must be executed on a main queue
+    [self executeOnMainQueue:^{
+        [self internal_clearCaches];
+    }];
+}
+
++ (void)executeOnMainQueue:(void(^)(void))block
+{
+    if (dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue())) {
+        block();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), block);
+    }
+}
+
++ (void)internal_clearCaches
+{
     NSSet *websiteDataTypes = [NSSet setWithArray:@[
                                                     WKWebsiteDataTypeDiskCache,
                                                     WKWebsiteDataTypeOfflineWebApplicationCache,
