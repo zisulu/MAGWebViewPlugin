@@ -158,7 +158,33 @@
 {
     NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
     NSString *appName = [infoDictionary objectForKey:@"CFBundleDisplayName"];
-    NSString *message = [NSString stringWithFormat:@"即将离开%@，唤起其他应用", appName];
+    NSString *externalScheme = externalURL.scheme;
+    NSString *externalHost = externalURL.host;
+    NSString *specialSchemePrefix = [NSString stringWithFormat:@"%@%@%@%@", @"i", @"t", @"m", @"s"];
+    NSString *message = nil;
+    if ([externalScheme hasPrefix:specialSchemePrefix]) {
+        if ([externalScheme isEqualToString:specialSchemePrefix]) {
+            message = [NSString stringWithFormat:@"即将离开「 %@ 」，打开「 iTunes 」", appName];
+        } else {
+            NSString *appStoreSchemeSuffix = [NSString stringWithFormat:@"-%@%@%@%@", @"a", @"p", @"p", @"s"];
+            if ([externalScheme containsString:appStoreSchemeSuffix]) {
+                message = [NSString stringWithFormat:@"即将离开「 %@ 」，打开「 AppStore 」", appName];
+            } else {
+                message = [NSString stringWithFormat:@"允许当前网页打开「 %@ 」应用？", externalScheme];
+            }
+        }
+    } else {
+        if ([webView.configuration.customInterceptHttpHosts containsObject:externalHost]) {
+            NSString *itunesHost = @"itunes.apple.com";
+            if ([externalHost isEqualToString:itunesHost]) {
+                message = [NSString stringWithFormat:@"即将离开「 %@ 」，打开「 iTunes 」", appName];
+            } else {
+                message = [NSString stringWithFormat:@"即将离开「 %@ 」，打开「 AppStore 」", appName];
+            }
+        } else {
+            message = [NSString stringWithFormat:@"即将离开「 %@ 」，唤起其他应用", appName];
+        }
+    }
     UIAlertController * alertController = [UIAlertController alertControllerWithTitle:@"提示" message:message preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction * cancelAction = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
         completionHandler(NO);

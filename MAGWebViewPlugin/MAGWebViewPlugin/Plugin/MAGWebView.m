@@ -9,6 +9,15 @@
 #import "MAGWebView.h"
 #import "Masonry.h"
 
+#ifndef dispatch_safe_async_main_queue
+#define dispatch_safe_async_main_queue(block)\
+if (dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue())) {\
+block();\
+} else {\
+dispatch_async(dispatch_get_main_queue(), block);\
+}
+#endif
+
 static NSString * const kMAGWebViewProgressKVO                  = @"estimatedProgress";
 static NSString * const kMAGWKWebCookies                        = @"com.lyeah.wkwebcookies";
 
@@ -52,7 +61,7 @@ MAGWebContext MAGWebViewInitialContext(void)
         _allowsInlineMediaPlayback = YES;
         _mediaPlaybackRequiresUserAction = NO;
         _mediaPlaybackAllowsAirPlay = YES;
-        _dataDetectorTypes = MAGWebDataDetectorTypePhoneNumber | MAGWebDataDetectorTypeLink;
+        _dataDetectorTypes = MAGWebDataDetectorTypeNone;
         _suppressesIncrementalRendering = NO;
         WKUserContentController *userContentController = [[WKUserContentController alloc] init];
         _userContentController = userContentController;
@@ -60,7 +69,8 @@ MAGWebContext MAGWebViewInitialContext(void)
         preferences.javaScriptCanOpenWindowsAutomatically = YES;
         _preferences = preferences;
         _customWhiteSchemes = [self internal_customWhiteSchemes];
-        _customWhiteHttpHosts = [self internal_customWhiteHttpHosts];
+        _customInterceptSchemes = [self internal_customInterceptSchemes];
+        _customInterceptHttpHosts = [self internal_customInterceptHttpHosts];
         
     }
     return self;
@@ -71,14 +81,19 @@ MAGWebContext MAGWebViewInitialContext(void)
     return @[
              @"http",
              @"https",
-             @"tel",
-             @"sms",
-             @"mailto",
-             @"itms-services",
              ];
 }
 
-- (NSArray<NSString *> *)internal_customWhiteHttpHosts
+- (NSArray<NSString *> *)internal_customInterceptSchemes
+{
+    return @[
+             @"tel",
+             @"sms",
+             @"mailto",
+             ];;
+}
+
+- (NSArray<NSString *> *)internal_customInterceptHttpHosts
 {
     return @[
              @"itunes.apple.com",
@@ -255,7 +270,7 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
 {
-    if ([otherGestureRecognizer isKindOfClass:[UILongPressGestureRecognizer class]] && otherGestureRecognizer == self.longPressGestureRecognizer) {
+    if ([otherGestureRecognizer isKindOfClass:[UILongPressGestureRecognizer class]] && gestureRecognizer == self.longPressGestureRecognizer) {
         return YES;
     } else {
         return NO;
@@ -330,7 +345,12 @@ MAGWebContext MAGWebViewInitialContext(void)
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler
 {
     self.currentRequest = [self internal_fixRequest:navigationAction.request];
-    BOOL result = [self internal_webViewShouldStartLoadWithRequest:self.currentRequest navigationType:navigationAction.navigationType];
+    BOOL result = [self internal_webViewCanOpenRequestURL:self.currentRequest.URL];
+    if (result) {
+        //internal intercept
+        [self internal_webViewOpenRequestURL:self.currentRequest.URL];
+    }
+    result = [self internal_webViewShouldStartLoadWithRequest:self.currentRequest navigationType:navigationAction.navigationType];
     if (result) {
         if (!navigationAction.targetFrame) {
             [webView loadRequest:self.currentRequest];
@@ -368,22 +388,12 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 - (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error
 {
-    if ([self internal_webViewShouldHandleExternalURLWithError:error]) {
-        [self internal_webViewHandleExternalURLWithError:error];
-        [self internal_webViewDidFinishLoad];
-    } else {
-        [self internal_webViewDidFailLoadWithError:error];
-    }
+    [self internal_webViewDidFailLoadWithError:error];
 }
 
 - (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error
 {
-    if ([self internal_webViewShouldHandleExternalURLWithError:error]) {
-        [self internal_webViewHandleExternalURLWithError:error];
-        [self internal_webViewDidFinishLoad];
-    } else {
-        [self internal_webViewDidFailLoadWithError:error];
-    }
+    [self internal_webViewDidFailLoadWithError:error];
 }
 
 - (void)webViewWebContentProcessDidTerminate:(WKWebView *)webView
@@ -433,47 +443,49 @@ MAGWebContext MAGWebViewInitialContext(void)
     }
 }
 
-- (BOOL)internal_webViewShouldHandleExternalURLWithError:(NSError *)error
+- (BOOL)internal_webViewCanOpenRequestURL:(NSURL *)requestURL
 {
     BOOL result = NO;
-    NSString *failedUrl = error.userInfo[NSURLErrorFailingURLStringErrorKey];
-    if ([failedUrl isKindOfClass:[NSString class]]) {
-        NSURL *failedURL = [NSURL URLWithString:failedUrl];
-        if (failedURL) {
-            NSString *failedScheme = failedURL.scheme;
-            NSString *failedHost = failedURL.host;
-            if (failedScheme.length > 0) {
-                if ([failedScheme hasPrefix:@"http"]) {
-                    NSArray<NSString *> *supportedHosts = [self.configuration customWhiteHttpHosts];
-                    if (failedHost.length > 0) {
-                        result = [supportedHosts containsObject:failedHost];
-                    }
-                } else {
-                    //tel, sms, mailto etc.
-                    result = YES;
+    if (requestURL) {
+        NSString *requestScheme = requestURL.scheme;
+        NSString *requestHost = requestURL.host;
+        if (requestScheme.length > 0) {
+            if ([requestScheme hasPrefix:@"http"]) {
+                NSArray<NSString *> *supportedHosts = [self.configuration customInterceptHttpHosts];
+                if (requestHost.length > 0) {
+                    result = [supportedHosts containsObject:requestHost];
                 }
-            }
-            if (result) {
-                result = [self internal_canOpenExternalURL:failedURL];
+            } else {
+                //tel, sms, mailto etc.
+                result = [self internal_canOpenExternalURL:requestURL];
+                if (result) {
+                    //we also don't want some schemes to be intercepted.
+                    NSArray *whiteSchemes = [self.configuration customWhiteSchemes];
+                    if (whiteSchemes.count > 0 && [whiteSchemes containsObject:requestScheme]) {
+                        //don't intercept
+                        result = NO;
+                    }
+                }
             }
         }
     }
     return result;
 }
 
-- (void)internal_webViewHandleExternalURLWithError:(NSError *)error
+- (void)internal_webViewOpenRequestURL:(NSURL *)requestURL
 {
-    NSString *failedUrl = error.userInfo[NSURLErrorFailingURLStringErrorKey];
-    NSURL *failedURL = [NSURL URLWithString:failedUrl];
-    NSArray *whiteSchemes = [self.configuration customWhiteSchemes];
-    if ([whiteSchemes containsObject:failedURL.scheme]) {
-        [self internal_openExternalURL:failedURL];
+    NSString *requestScheme = requestURL.scheme;
+    NSArray *interceptSchemes = [self.configuration customInterceptSchemes];
+    if (interceptSchemes.count > 0 && [interceptSchemes containsObject:requestScheme]) {
+        //intercept directly
+        [self internal_openExternalURL:requestURL];
     } else {
+        //the outside decides whether to intercept or not
         if (self.delegate && [self.delegate respondsToSelector:@selector(webView:openExternalURL:completionHandler:)]) {
             __weak typeof(self)wself = self;
-            [self.delegate webView:self openExternalURL:failedURL completionHandler:^(BOOL result) {
+            [self.delegate webView:self openExternalURL:requestURL completionHandler:^(BOOL result) {
                 if (result) {
-                    [wself internal_openExternalURL:failedURL];
+                    [wself internal_openExternalURL:requestURL];
                 }
             }];
         }
@@ -975,15 +987,44 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 + (void)clearCookies
 {
-    if (@available(iOS 11.0, *)) {
+    [self clearCookies:nil];
+}
+
++ (void)clearCookies:(void (^)(void))completionHandler
+{
+    //must be executed on a main queue
+    dispatch_safe_async_main_queue(^{
+        [self internal_clearCookies:completionHandler];
+    });
+}
+
++ (void)internal_clearCookies:(void (^)(void))completionHandler
+{
+    [NSHTTPCookieStorage clearCookies];
+    [self clearLocalCookies];
+    if (@available(iOS 9.0, *)) {
         NSSet *websiteDataTypes = [NSSet setWithObject:WKWebsiteDataTypeCookies];
         NSDate *dateFrom = [NSDate dateWithTimeIntervalSince1970:0];
         [[WKWebsiteDataStore defaultDataStore] removeDataOfTypes:websiteDataTypes modifiedSince:dateFrom completionHandler:^{
-            
+            NSLog(@"Cookies清除成功");
+            if (completionHandler) {
+                completionHandler();
+            }
         }];
+    } else {
+        NSString *libraryDirectory = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+        NSString *cookiesFolderPath = [libraryDirectory stringByAppendingString:@"/Cookies"];
+        NSError *error = nil;;
+        [[NSFileManager defaultManager] removeItemAtPath:cookiesFolderPath error:&error];
+        if (error) {
+            NSLog(@"Cookies清除成功");
+        } else {
+            NSLog(@"Cookies清除失败");
+        }
+        if (completionHandler) {
+            completionHandler();
+        }
     }
-    [NSHTTPCookieStorage clearCookies];
-    [self clearLocalCookies];
 }
 
 + (void)clearLocalCookies
@@ -1020,36 +1061,44 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 + (void)clearCaches
 {
+    [self clearCaches:nil];
+}
+
++ (void)clearCaches:(void (^)(void))completionHandler
+{
     //must be executed on a main queue
-    [self executeOnMainQueue:^{
-        [self internal_clearCaches];
-    }];
+    dispatch_safe_async_main_queue(^{
+        [self internal_clearCaches:nil];
+    });
 }
 
-+ (void)executeOnMainQueue:(void(^)(void))block
++ (void)internal_clearCaches:(void (^)(void))completionHandler
 {
-    if (dispatch_queue_get_label(DISPATCH_CURRENT_QUEUE_LABEL) == dispatch_queue_get_label(dispatch_get_main_queue())) {
-        block();
+    NSURLCache *webCache = [NSURLCache sharedURLCache];
+    [webCache removeAllCachedResponses];
+    if (@available(iOS 9.0, *)) {
+        NSSet *websiteDataTypes = [NSSet setWithArray:@[
+                                                        WKWebsiteDataTypeDiskCache,
+                                                        WKWebsiteDataTypeOfflineWebApplicationCache,
+                                                        WKWebsiteDataTypeMemoryCache,
+                                                        WKWebsiteDataTypeLocalStorage,
+                                                        WKWebsiteDataTypeSessionStorage,
+                                                        WKWebsiteDataTypeIndexedDBDatabases,
+                                                        WKWebsiteDataTypeWebSQLDatabases,
+                                                        ]];
+        NSDate *sinceDate = [NSDate dateWithTimeIntervalSince1970:0];
+        [[WKWebsiteDataStore defaultDataStore] removeDataOfTypes:websiteDataTypes modifiedSince:sinceDate completionHandler:^{
+            NSLog(@"WebCache清除成功");
+            if (completionHandler) {
+                completionHandler();
+            }
+        }];
     } else {
-        dispatch_async(dispatch_get_main_queue(), block);
+        NSLog(@"WebCache清除成功");
+        if (completionHandler) {
+            completionHandler();
+        }
     }
-}
-
-+ (void)internal_clearCaches
-{
-    NSSet *websiteDataTypes = [NSSet setWithArray:@[
-                                                    WKWebsiteDataTypeDiskCache,
-                                                    WKWebsiteDataTypeOfflineWebApplicationCache,
-                                                    WKWebsiteDataTypeMemoryCache,
-                                                    WKWebsiteDataTypeLocalStorage,
-                                                    WKWebsiteDataTypeSessionStorage,
-                                                    WKWebsiteDataTypeIndexedDBDatabases,
-                                                    WKWebsiteDataTypeWebSQLDatabases,
-                                                    ]];
-    NSDate *sinceDate = [NSDate dateWithTimeIntervalSince1970:0];
-    [[WKWebsiteDataStore defaultDataStore] removeDataOfTypes:websiteDataTypes modifiedSince:sinceDate completionHandler:^{
-        
-    }];
 }
 
 @end

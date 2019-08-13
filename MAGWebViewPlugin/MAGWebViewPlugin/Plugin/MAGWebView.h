@@ -82,8 +82,8 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 - (void)webView:(id<MAGWebView>)webView longPressGestureRecognized:(UILongPressGestureRecognizer *)longPressGestureRecognizer;
 
 /**
- Some links like sms, tel, mailto, itms-services, 
-
+ Some links like sms, tel, mailto
+ 
  @param webView MAGWebView
  @param externalURL externalURL
  @param completionHandler completionHandler
@@ -140,18 +140,24 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 @property (nonatomic, strong) WKUserContentController *userContentController;
 
 /**
- An array contains white schemes.
- Default contain @"http", @"https", @"tel", @"sms", @"mailto", @"itms-services"
+ An array contains white schemes that does not internally intercept.
+ Default contain @"http", @"https"
  */
 @property (nonatomic, copy) NSArray<NSString *> *customWhiteSchemes;
 
 /**
- An array contains white http or https hosts.
- Default contain @"itunes.apple.com",
-                 @"itunesconnect.apple.com",
-                 @"appstoreconnect.apple.com"
+ An array contains schemes that that needs internally intercept.
+ Default contain @"tel", @"sms", @"mailto"
  */
-@property (nonatomic, copy) NSArray<NSString *> *customWhiteHttpHosts;
+@property (nonatomic, copy) NSArray<NSString *> *customInterceptSchemes;
+
+/**
+ An array contains http or https hosts that needs internally intercept.
+ Default contain @"itunes.apple.com",
+ @"itunesconnect.apple.com",
+ @"appstoreconnect.apple.com"
+ */
+@property (nonatomic, copy) NSArray<NSString *> *customInterceptHttpHosts;
 
 @end
 
@@ -275,6 +281,7 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
  delete all cookies
  */
 + (void)clearCookies;
++ (void)clearCookies:(void (^_Nullable)(void))completionHandler;
 
 + (NSString *)cookieScriptWithDomain:(NSString *)domain;
 + (WKUserScript *)searchCookieUserScriptWithDomain:(NSString *)domain;
@@ -286,7 +293,8 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 /**
  clear all caches except cookies
  */
-+ (void)clearCaches API_AVAILABLE(ios(9.0));
++ (void)clearCaches;
++ (void)clearCaches:(void (^_Nullable)(void))completionHandler;
 
 @end
 
