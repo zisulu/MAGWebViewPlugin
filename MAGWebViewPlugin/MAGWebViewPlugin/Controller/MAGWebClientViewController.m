@@ -37,7 +37,7 @@
         make.edges.equalTo(self.view);
     }];
     self.webView = webView;
-    NSURL *requestURL = [NSURL URLWithString:@"https://fir.im/magoa"];
+    NSURL *requestURL = [NSURL URLWithString:@"https://www.baidu.com"];
     NSURLRequest *request = [NSURLRequest requestWithURL:requestURL];
     [self.webView loadRequest:request];
     //注册jsBridge
