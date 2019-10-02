@@ -117,7 +117,7 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 
 /**
  An enum value indicating the type of data detection desired.
- @discussion The default value is MAGWebDataDetectorTypePhoneNumber|MAGWebDataDetectorTypeLink.
+ @discussion The default value is MAGWebDataDetectorTypeNone.
  */
 @property (nonatomic) MAGWebDataDetectorTypes dataDetectorTypes;
 
@@ -262,29 +262,10 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 @interface WKWebView (MAGWebCookie)
 
 /**
- sync cookie to WKHTTPCookieStore
- */
-+ (void)syncCookies:(WKHTTPCookieStore *)cookieStore API_AVAILABLE(ios(11.0));
-
-/**
- intsert cookies to disk
- */
-- (void)insertCookie:(NSHTTPCookie *)cookie;
-- (void)insertCookies:(NSArray<NSHTTPCookie *> *)cookies;
-
-/**
- fetch cookies from disk
- */
-+ (NSArray<NSHTTPCookie *> *)sharedCookieStorage;
-
-/**
  delete all cookies
  */
 + (void)clearCookies;
 + (void)clearCookies:(void (^_Nullable)(void))completionHandler;
-
-+ (NSString *)cookieScriptWithDomain:(NSString *)domain;
-+ (WKUserScript *)searchCookieUserScriptWithDomain:(NSString *)domain;
 
 @end
 

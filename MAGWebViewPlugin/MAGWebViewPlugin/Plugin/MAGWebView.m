@@ -19,8 +19,6 @@ dispatch_async(dispatch_get_main_queue(), block);\
 #endif
 
 static NSString * const kMAGWebViewProgressKVO                  = @"estimatedProgress";
-static NSString * const kMAGWKWebCookies                        = @"com.lyeah.wkwebcookies";
-
 static NSString * const kMAGWebViewTitleJavascript              = @"document.title";
 
 MAGWebContext MAGWebViewInitialContext(void)
@@ -240,10 +238,6 @@ MAGWebContext MAGWebViewInitialContext(void)
     scrollView.decelerationRate = UIScrollViewDecelerationRateNormal;
     scrollView.scrollsToTop = YES;
     [webView addObserver:self forKeyPath:kMAGWebViewProgressKVO options:NSKeyValueObservingOptionNew context:nil];
-    if (@available(iOS 11.0, *)) {
-        WKHTTPCookieStore *cookieStore = webView.configuration.websiteDataStore.httpCookieStore;
-        [WKWebView syncCookies:cookieStore];
-    }
     webView.UIDelegate = self;
     webView.navigationDelegate = self;
     [self addSubview:webView];
@@ -344,7 +338,7 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler
 {
-    self.currentRequest = [self internal_fixRequest:navigationAction.request];
+    self.currentRequest = navigationAction.request;
     BOOL result = [self internal_webViewCanOpenRequestURL:self.currentRequest.URL];
     if (result) {
         //internal intercept
@@ -363,16 +357,6 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationResponse:(WKNavigationResponse *)navigationResponse decisionHandler:(void (^)(WKNavigationResponsePolicy))decisionHandler
 {
-    if (@available(iOS 12.0, *)) {
-        WKHTTPCookieStore *cookieStore = webView.configuration.websiteDataStore.httpCookieStore;
-        [cookieStore getAllCookies:^(NSArray<NSHTTPCookie *> * _Nonnull cookies) {
-            [webView insertCookies:cookies];
-        }];
-    } else {
-        NSHTTPURLResponse *response = (NSHTTPURLResponse *)navigationResponse.response;
-        NSArray *cookies =[NSHTTPCookie cookiesWithResponseHeaderFields:[response allHeaderFields] forURL:response.URL];
-        [webView insertCookies:cookies];
-    }
     decisionHandler(WKNavigationResponsePolicyAllow);
 }
 
@@ -406,7 +390,6 @@ MAGWebContext MAGWebViewInitialContext(void)
 - (WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures
 {
     if (!navigationAction.targetFrame.isMainFrame) {
-        self.currentRequest = [self internal_fixRequest:navigationAction.request];
         [webView loadRequest:self.currentRequest];
     }
     return nil;
@@ -602,37 +585,10 @@ MAGWebContext MAGWebViewInitialContext(void)
         [webView loadRequest:request];
     } else {
         WKWebView *webView = [self wkWebView];
-        NSString *domain = request.URL.host;
-        if (domain) {
-            WKUserScript *userScript = [WKWebView searchCookieUserScriptWithDomain:domain];
-            [webView.configuration.userContentController addUserScript:userScript];
-        }
-        request = [self internal_fixRequest:request];
         self.originRequest = request;
         self.currentRequest = request;
         [webView loadRequest:request];
     }
-}
-
-- (NSURLRequest *)internal_fixRequest:(NSURLRequest *)request
-{
-    if ([self isUIWebView]) return request;
-    NSMutableURLRequest *fixedRequest = nil;
-    if ([request isKindOfClass:[NSMutableURLRequest class]]) {
-        fixedRequest = (NSMutableURLRequest *)request;
-    } else {
-        fixedRequest = [request mutableCopy];
-    }
-    NSDictionary<NSString *, NSString *> *cookieData = [NSHTTPCookie requestHeaderFieldsWithCookies:[WKWebView sharedCookieStorage]];
-    if (cookieData.count > 0) {
-        NSMutableDictionary<NSString *, NSString *> *mutableFields = [NSMutableDictionary dictionary];
-        if (fixedRequest.allHTTPHeaderFields) {
-            mutableFields = [fixedRequest.allHTTPHeaderFields mutableCopy];
-            [mutableFields setValuesForKeysWithDictionary:cookieData];
-            fixedRequest.allHTTPHeaderFields = [mutableFields copy];
-        }
-    }
-    return fixedRequest;
 }
 
 - (void)loadHTMLString:(NSString *)string baseURL:(nullable NSURL *)baseURL
@@ -913,78 +869,6 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 @implementation WKWebView (MAGWebCookie)
 
-+ (void)syncCookies:(WKHTTPCookieStore *)cookieStore
-{
-    NSArray *cookies = [self sharedCookieStorage];
-    for (NSHTTPCookie *cookie in cookies) {
-        [cookieStore setCookie:cookie completionHandler:nil];
-    }
-}
-
-- (void)insertCookie:(NSHTTPCookie *)cookie
-{
-    @autoreleasepool {
-        if (@available(iOS 11.0, *)) {
-            WKHTTPCookieStore *cookieStore = self.configuration.websiteDataStore.httpCookieStore;
-            [cookieStore setCookie:cookie completionHandler:nil];
-        }
-        NSHTTPCookieStorage *sharedCookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
-        [sharedCookieStorage setCookie:cookie];
-        NSArray<NSHTTPCookie *> *localCookies = [NSKeyedUnarchiver unarchiveObjectWithData:[[NSUserDefaults standardUserDefaults] objectForKey:kMAGWKWebCookies]];
-        NSMutableArray<NSHTTPCookie *> *latestCookies = [NSMutableArray array];
-        for (NSInteger i=0;i<localCookies.count;i++) {
-            NSHTTPCookie *tempCookie = localCookies[i];
-            if ([cookie.name isEqualToString:tempCookie.name] && [cookie.domain isEqualToString:tempCookie.domain]) {
-                continue;
-            }
-            [latestCookies addObject:tempCookie];
-        }
-        [latestCookies addObject:cookie];
-        NSData *cookiesData = [NSKeyedArchiver archivedDataWithRootObject:[latestCookies copy]];
-        [[NSUserDefaults standardUserDefaults] setObject:cookiesData forKey:kMAGWKWebCookies];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-    }
-}
-
-- (void)insertCookies:(NSArray<NSHTTPCookie *> *)cookies
-{
-    if (cookies.count == 0) return;
-    for (NSHTTPCookie *cookie in cookies) {
-        [self insertCookie:cookie];
-    }
-}
-
-+ (NSArray<NSHTTPCookie *> *)sharedCookieStorage
-{
-    @autoreleasepool {
-        NSMutableArray<NSHTTPCookie *> *mutableCookies = [NSMutableArray array];
-        //获取NSHTTPCookieStorage的cookies
-        NSHTTPCookieStorage *sharedCookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
-        [mutableCookies addObjectsFromArray:sharedCookieStorage.cookies];
-        //获取自定义存储的cookies
-        NSArray<NSHTTPCookie *> *localCookies = [NSKeyedUnarchiver unarchiveObjectWithData:[[NSUserDefaults standardUserDefaults] objectForKey:kMAGWKWebCookies]];
-        NSMutableArray<NSHTTPCookie *> *latestCookies = [NSMutableArray array];
-        for (NSInteger i=0;i<localCookies.count;i++) {
-            NSHTTPCookie *cookie = localCookies[i];
-            if (!cookie.expiresDate) {
-                [mutableCookies addObject:cookie];
-                [latestCookies addObject:cookie];
-                continue;
-            }
-            //过滤过期的cookies
-            if ([cookie.expiresDate compare:[NSDate dateWithTimeIntervalSinceNow:0]]) {
-                [mutableCookies addObject:cookie];
-                [latestCookies addObject:cookie];
-            }
-        }
-        //存储最新有效的cookies
-        NSData *cookiesData = [NSKeyedArchiver archivedDataWithRootObject:[latestCookies copy]];
-        [[NSUserDefaults standardUserDefaults] setObject:cookiesData forKey:kMAGWKWebCookies];
-        [[NSUserDefaults standardUserDefaults] synchronize];
-        return mutableCookies;
-    }
-}
-
 + (void)clearCookies
 {
     [self clearCookies:nil];
@@ -1001,7 +885,6 @@ MAGWebContext MAGWebViewInitialContext(void)
 + (void)internal_clearCookies:(void (^)(void))completionHandler
 {
     [NSHTTPCookieStorage clearCookies];
-    [self clearLocalCookies];
     if (@available(iOS 9.0, *)) {
         NSSet *websiteDataTypes = [NSSet setWithObject:WKWebsiteDataTypeCookies];
         NSDate *dateFrom = [NSDate dateWithTimeIntervalSince1970:0];
@@ -1025,34 +908,6 @@ MAGWebContext MAGWebViewInitialContext(void)
             completionHandler();
         }
     }
-}
-
-+ (void)clearLocalCookies
-{
-    NSData *cookiesData = [NSKeyedArchiver archivedDataWithRootObject:@[]];
-    [[NSUserDefaults standardUserDefaults] setObject:cookiesData forKey:kMAGWKWebCookies];
-    [[NSUserDefaults standardUserDefaults] synchronize];
-}
-
-+ (NSString *)cookieScriptWithDomain:(NSString *)domain
-{
-    @autoreleasepool {
-        NSMutableString *mutableCookie = [NSMutableString string];
-        NSArray *cookies = [self sharedCookieStorage];
-        for (NSHTTPCookie *cookie in cookies) {
-            if ([cookie.domain containsString:domain]) {
-                [mutableCookie appendString:[NSString stringWithFormat:@"document.cookie = '%@';", cookie.mag_cookieScriptValue]];
-            }
-        }
-        return [mutableCookie copy];
-    }
-}
-
-+ (WKUserScript *)searchCookieUserScriptWithDomain:(NSString *)domain
-{
-    NSString *cookie = [self cookieScriptWithDomain:domain];
-    WKUserScript *cookieUserScript = [[WKUserScript alloc] initWithSource:cookie injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:NO];
-    return cookieUserScript;
 }
 
 @end
