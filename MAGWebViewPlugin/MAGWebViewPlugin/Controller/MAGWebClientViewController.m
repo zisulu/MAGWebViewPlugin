@@ -25,13 +25,18 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
-    MAGWebView *webView = [[MAGWebView alloc] init];
-    webView.delegate = self;
-//    NSArray *whiteSchemes = webView.configuration.customWhiteSchemes;
-//    NSMutableArray *mutableList = [NSMutableArray arrayWithArray:whiteSchemes];
-//    [mutableList addObject:@"customscheme"];
-//    webView.configuration.customWhiteSchemes = [mutableList copy];
-//    webView.configuration.customWhiteSchemes = @[];
+    MAGWebViewConfiguration *configuration = [[MAGWebViewConfiguration alloc] init];
+    configuration.mediaPlaybackRequiresUserAction = NO;
+    /**
+    NSMutableArray<NSString *> *customWhiteSchemes = [configuration.customWhiteSchemes mutableCopy];
+    NSArray *supportedProtocols = @[
+                                    @"CustomScheme",
+                                    ];
+    [customWhiteSchemes addObjectsFromArray:supportedProtocols];
+    configuration.customWhiteSchemes = [customWhiteSchemes copy];
+     */
+    MAGWebContext webContext = MAGWebViewInitialContext();
+    MAGWebView *webView = [[MAGWebView alloc] initWithWebContext:webContext configuration:configuration];
     [self.view addSubview:webView];
     [webView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.edges.equalTo(self.view);
@@ -82,13 +87,11 @@
 - (void)webView:(id<MAGWebView>)webView didResetWithURL:(NSURL *)requestURL
 {
     NSLog(@"didResetWithURL:%@", requestURL);
-    //如果是UIWebView更新UserAgent的时候，会被重新创建，所以可能需要重新设置
-    if (webView.webContext == MAGWebContextUIKit) {
-        //注册jsBridge
-        [self registerJavascriptBridge];
-        //添加刷新
-        [self addRefreshComponent];
-    }
+    //更新UserAgent的时候，会被重新创建，所以可能需要重新设置
+    //注册jsBridge
+    [self registerJavascriptBridge];
+    //添加刷新
+    [self addRefreshComponent];
 }
 
 - (void)webView:(id<MAGWebView>)webView longPressGestureRecognized:(UILongPressGestureRecognizer *)longPressGestureRecognizer
@@ -174,7 +177,7 @@
             }
         }
     } else {
-        if ([webView.configuration.customInterceptHttpHosts containsObject:externalHost]) {
+        if ([webView.configuration.customExternalHttpHosts containsObject:externalHost]) {
             NSString *itunesHost = @"itunes.apple.com";
             if ([externalHost isEqualToString:itunesHost]) {
                 message = [NSString stringWithFormat:@"即将离开「 %@ 」，打开「 iTunes 」", appName];

@@ -18,9 +18,6 @@ dispatch_async(dispatch_get_main_queue(), block);\
 }
 #endif
 
-static NSString * const kMAGWebViewProgressKVO                  = @"estimatedProgress";
-static NSString * const kMAGWebViewTitleJavascript              = @"document.title";
-
 MAGWebContext MAGWebViewInitialContext(void)
 {
     MAGWebContext webContext = MAGWebContextUIKit;
@@ -50,6 +47,12 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 @end
 
+@interface MAGWebViewConfiguration ()
+
+@property (nonatomic, copy, readwrite) WKWebViewConfiguration *wkConfiguration;
+
+@end
+
 @implementation MAGWebViewConfiguration
 
 - (instancetype)init
@@ -57,21 +60,78 @@ MAGWebContext MAGWebViewInitialContext(void)
     self = [super init];
     if (self) {
         _allowsInlineMediaPlayback = YES;
-        _mediaPlaybackRequiresUserAction = NO;
+        _mediaPlaybackRequiresUserAction = YES;
         _mediaPlaybackAllowsAirPlay = YES;
-        _dataDetectorTypes = MAGWebDataDetectorTypeNone;
-        _suppressesIncrementalRendering = NO;
-        WKUserContentController *userContentController = [[WKUserContentController alloc] init];
-        _userContentController = userContentController;
-        WKPreferences *preferences = [[WKPreferences alloc] init];
-        preferences.javaScriptCanOpenWindowsAutomatically = YES;
-        _preferences = preferences;
-        _customWhiteSchemes = [self internal_customWhiteSchemes];
-        _customInterceptSchemes = [self internal_customInterceptSchemes];
-        _customInterceptHttpHosts = [self internal_customInterceptHttpHosts];
         
+        _customWhiteSchemes = [self internal_customWhiteSchemes];
+        _customExternalSchemes = [self internal_customExternalSchemes];
+        _customExternalHttpHosts = [self internal_customExternalHttpHosts];
     }
     return self;
+}
+
+- (WKWebViewConfiguration *)wkConfiguration
+{
+    if (!_wkConfiguration) {
+        WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
+        WKUserContentController *userContentController = [[WKUserContentController alloc] init];
+        configuration.userContentController = userContentController;
+        WKPreferences *preferences = [[WKPreferences alloc] init];
+        preferences.javaScriptCanOpenWindowsAutomatically = YES;
+        configuration.preferences = preferences;
+        configuration.processPool = [MAGProcessPool sharedProcessPool];
+        configuration.allowsInlineMediaPlayback = YES;
+        if (@available(iOS 10.0, *)) {
+            configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeAll;
+            configuration.allowsAirPlayForMediaPlayback = YES;
+        } else if (@available(iOS 9.0, *)) {
+            configuration.requiresUserActionForMediaPlayback = YES;
+            configuration.allowsAirPlayForMediaPlayback = YES;
+        } else {
+            configuration.mediaPlaybackRequiresUserAction = YES;
+            configuration.mediaPlaybackAllowsAirPlay = YES;
+        }
+        _wkConfiguration = configuration;
+    }
+    return _wkConfiguration;
+}
+
+- (void)setAllowsInlineMediaPlayback:(BOOL)allowsInlineMediaPlayback
+{
+    if (_allowsInlineMediaPlayback == allowsInlineMediaPlayback) return;
+    _allowsInlineMediaPlayback = allowsInlineMediaPlayback;
+    WKWebViewConfiguration *configuration = self.wkConfiguration;
+    configuration.allowsInlineMediaPlayback = _allowsInlineMediaPlayback;
+}
+
+- (void)setMediaPlaybackRequiresUserAction:(BOOL)mediaPlaybackRequiresUserAction
+{
+    if (_mediaPlaybackRequiresUserAction == mediaPlaybackRequiresUserAction) return;
+    _mediaPlaybackRequiresUserAction = mediaPlaybackRequiresUserAction;
+    WKWebViewConfiguration *configuration = self.wkConfiguration;
+    if (@available(iOS 10.0, *)) {
+        if (_mediaPlaybackRequiresUserAction) {
+            configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeAll;
+        } else {
+            configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeNone;
+        }
+    } else if (@available(iOS 9.0, *)) {
+        configuration.requiresUserActionForMediaPlayback = _mediaPlaybackRequiresUserAction;
+    } else {
+        configuration.mediaPlaybackRequiresUserAction = _mediaPlaybackRequiresUserAction;
+    }
+}
+
+- (void)setMediaPlaybackAllowsAirPlay:(BOOL)mediaPlaybackAllowsAirPlay
+{
+    if (_mediaPlaybackAllowsAirPlay == mediaPlaybackAllowsAirPlay) return;
+    _mediaPlaybackAllowsAirPlay = mediaPlaybackAllowsAirPlay;
+    WKWebViewConfiguration *configuration = self.wkConfiguration;
+    if (@available(iOS 9.0, *)) {
+        configuration.allowsAirPlayForMediaPlayback = _mediaPlaybackAllowsAirPlay;
+    } else {
+        configuration.mediaPlaybackAllowsAirPlay = _mediaPlaybackAllowsAirPlay;
+    }
 }
 
 - (NSArray<NSString *> *)internal_customWhiteSchemes
@@ -82,7 +142,7 @@ MAGWebContext MAGWebViewInitialContext(void)
              ];
 }
 
-- (NSArray<NSString *> *)internal_customInterceptSchemes
+- (NSArray<NSString *> *)internal_customExternalSchemes
 {
     return @[
              @"tel",
@@ -91,7 +151,7 @@ MAGWebContext MAGWebViewInitialContext(void)
              ];;
 }
 
-- (NSArray<NSString *> *)internal_customInterceptHttpHosts
+- (NSArray<NSString *> *)internal_customExternalHttpHosts
 {
     return @[
              @"itunes.apple.com",
@@ -124,7 +184,7 @@ MAGWebContext MAGWebViewInitialContext(void)
     self = [super initWithCoder:aDecoder];
     if (self) {
         _webContext = MAGWebViewInitialContext();
-        _configuration = [[MAGWebViewConfiguration alloc] init];
+        [self internal_setupConfiguration];
         [self internal_setupWebView];
     }
     return self;
@@ -135,7 +195,7 @@ MAGWebContext MAGWebViewInitialContext(void)
     self = [super initWithFrame:frame];
     if (self) {
         _webContext = MAGWebViewInitialContext();
-        _configuration = [[MAGWebViewConfiguration alloc] init];
+        [self internal_setupConfiguration];
         [self internal_setupWebView];
     }
     return self;
@@ -143,13 +203,35 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 - (instancetype)initWithWebContext:(MAGWebContext)webContext
 {
+    MAGWebViewConfiguration *configuration = [[MAGWebViewConfiguration alloc] init];
+    return [self initWithWebContext:webContext configuration:configuration];
+}
+
+- (instancetype)initWithConfiguration:(MAGWebViewConfiguration *)configuration
+{
+    MAGWebContext webContext = MAGWebViewInitialContext();
+    return [self initWithWebContext:webContext configuration:configuration];
+}
+
+- (instancetype)initWithWebContext:(MAGWebContext)webContext configuration:(MAGWebViewConfiguration *)configuration
+{
     self = [super initWithFrame:CGRectZero];
     if (self) {
         _webContext = webContext;
-        _configuration = [[MAGWebViewConfiguration alloc] init];
+        if (!configuration) {
+            [self internal_setupConfiguration];
+        } else {
+            _configuration = configuration;
+        }
         [self internal_setupWebView];
     }
     return self;
+}
+
+- (void)internal_setupConfiguration
+{
+    MAGWebViewConfiguration *configuration = [[MAGWebViewConfiguration alloc] init];
+    _configuration = configuration;
 }
 
 - (void)internal_setupWebView
@@ -173,7 +255,7 @@ MAGWebContext MAGWebViewInitialContext(void)
     if (self.webView) {
         if ([self isWKWebView]) {
             //remove KVO, avoid crash
-            [[self wkWebView] removeObserver:self forKeyPath:kMAGWebViewProgressKVO];
+            [[self wkWebView] removeObserver:self forKeyPath:@"estimatedProgress"];
         }
         [self.webView removeFromSuperview];
         self.webView = nil;
@@ -192,8 +274,8 @@ MAGWebContext MAGWebViewInitialContext(void)
     webView.clipsToBounds = NO;
     webView.allowsInlineMediaPlayback = magConfiguration.allowsInlineMediaPlayback;
     webView.mediaPlaybackRequiresUserAction = magConfiguration.mediaPlaybackRequiresUserAction;
+    webView.mediaPlaybackAllowsAirPlay = magConfiguration.mediaPlaybackAllowsAirPlay;
     webView.keyboardDisplayRequiresUserAction = NO;
-    webView.dataDetectorTypes = (NSUInteger)magConfiguration.dataDetectorTypes;
     webView.backgroundColor = [UIColor clearColor];
     UIScrollView *scrollView = webView.scrollView;
     scrollView.clipsToBounds = NO;
@@ -211,24 +293,8 @@ MAGWebContext MAGWebViewInitialContext(void)
 - (void)initWKWebView
 {
     MAGWebViewConfiguration *magConfiguration = _configuration;
-    WKWebViewConfiguration *configuration = [[WKWebViewConfiguration alloc] init];
-    configuration.userContentController = magConfiguration.userContentController;
-    configuration.preferences = magConfiguration.preferences;
-    configuration.processPool = [MAGProcessPool sharedProcessPool];
-    configuration.allowsInlineMediaPlayback = magConfiguration.allowsInlineMediaPlayback;
-    if (@available(iOS 10.0, *)) {
-        configuration.dataDetectorTypes = (NSUInteger)magConfiguration.dataDetectorTypes;
-        if (magConfiguration.mediaPlaybackRequiresUserAction) {
-            configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeAll;
-        } else {
-            configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeNone;
-        }
-    } else if (@available(iOS 9.0, *)) {
-        configuration.requiresUserActionForMediaPlayback = magConfiguration.mediaPlaybackRequiresUserAction;
-    } else {
-        configuration.mediaPlaybackRequiresUserAction = magConfiguration.mediaPlaybackRequiresUserAction;
-    }
-    WKWebView *webView = [[WKWebView alloc] initWithFrame:self.bounds configuration:configuration];
+    WKWebViewConfiguration *wkConfiguration = magConfiguration.wkConfiguration;
+    WKWebView *webView = [[WKWebView alloc] initWithFrame:self.bounds configuration:wkConfiguration];
     webView.opaque = NO;
     webView.clipsToBounds = NO;
     webView.backgroundColor = [UIColor clearColor];
@@ -237,7 +303,11 @@ MAGWebContext MAGWebViewInitialContext(void)
     scrollView.keyboardDismissMode = UIScrollViewKeyboardDismissModeInteractive;
     scrollView.decelerationRate = UIScrollViewDecelerationRateNormal;
     scrollView.scrollsToTop = YES;
-    [webView addObserver:self forKeyPath:kMAGWebViewProgressKVO options:NSKeyValueObservingOptionNew context:nil];
+    [webView addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:nil];
+    if (@available(iOS 11.0, *)) {
+        WKHTTPCookieStore *cookieStore = webView.configuration.websiteDataStore.httpCookieStore;
+        [WKWebView syncCookies:cookieStore];
+    }
     webView.UIDelegate = self;
     webView.navigationDelegate = self;
     [self addSubview:webView];
@@ -302,7 +372,7 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context
 {
-    if ([keyPath isEqualToString:kMAGWebViewProgressKVO]) {
+    if ([keyPath isEqualToString:@"estimatedProgress"]) {
         if (object == self.webView) {
             self.estimatedProgress = [change[NSKeyValueChangeNewKey] doubleValue];
             [self internal_webViewDidUpdateProgress:self.estimatedProgress];
@@ -357,6 +427,17 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 - (void)webView:(WKWebView *)webView decidePolicyForNavigationResponse:(WKNavigationResponse *)navigationResponse decisionHandler:(void (^)(WKNavigationResponsePolicy))decisionHandler
 {
+    if (@available(iOS 12.0, *)) {
+        WKHTTPCookieStore *cookieStore = webView.configuration.websiteDataStore.httpCookieStore;
+        [cookieStore getAllCookies:^(NSArray<NSHTTPCookie *> * _Nonnull cookies) {
+            [webView insertCookies:cookies];
+        }];
+    } else {
+        NSHTTPURLResponse *response = (NSHTTPURLResponse *)navigationResponse.response;
+        NSArray *cookies =[NSHTTPCookie cookiesWithResponseHeaderFields:[response allHeaderFields] forURL:response.URL];
+        [webView insertCookies:cookies];
+    }
+
     decisionHandler(WKNavigationResponsePolicyAllow);
 }
 
@@ -434,7 +515,7 @@ MAGWebContext MAGWebViewInitialContext(void)
         NSString *requestHost = requestURL.host;
         if (requestScheme.length > 0) {
             if ([requestScheme hasPrefix:@"http"]) {
-                NSArray<NSString *> *supportedHosts = [self.configuration customInterceptHttpHosts];
+                NSArray<NSString *> *supportedHosts = [self.configuration customExternalHttpHosts];
                 if (requestHost.length > 0) {
                     result = [supportedHosts containsObject:requestHost];
                 }
@@ -458,7 +539,7 @@ MAGWebContext MAGWebViewInitialContext(void)
 - (void)internal_webViewOpenRequestURL:(NSURL *)requestURL
 {
     NSString *requestScheme = requestURL.scheme;
-    NSArray *interceptSchemes = [self.configuration customInterceptSchemes];
+    NSArray *interceptSchemes = [self.configuration customExternalSchemes];
     if (interceptSchemes.count > 0 && [interceptSchemes containsObject:requestScheme]) {
         //intercept directly
         [self internal_openExternalURL:requestURL];
@@ -641,7 +722,7 @@ MAGWebContext MAGWebViewInitialContext(void)
 - (NSString *)title
 {
     if ([self isUIWebView]) {
-        return [[self uiWebView] stringByEvaluatingJavaScriptFromString:kMAGWebViewTitleJavascript];
+        return [[self uiWebView] stringByEvaluatingJavaScriptFromString:@"document.title"];
     } else {
         return [self wkWebView].title;
     }
@@ -858,7 +939,7 @@ MAGWebContext MAGWebViewInitialContext(void)
         WKWebView *webView = [self wkWebView];
         webView.UIDelegate = nil;
         webView.navigationDelegate = nil;
-        [webView removeObserver:self forKeyPath:kMAGWebViewProgressKVO];
+        [webView removeObserver:self forKeyPath:@"estimatedProgress"];
         webView.scrollView.delegate = nil;
         [webView stopLoading];
         [webView removeFromSuperview];
@@ -868,6 +949,45 @@ MAGWebContext MAGWebViewInitialContext(void)
 @end
 
 @implementation WKWebView (MAGWebCookie)
+
++ (void)syncCookies:(WKHTTPCookieStore *)cookieStore
+{
+    NSArray *cookies = [self sharedCookieStorage];
+    for (NSHTTPCookie *cookie in cookies) {
+        [cookieStore setCookie:cookie completionHandler:nil];
+    }
+}
+
+- (void)insertCookie:(NSHTTPCookie *)cookie
+{
+    @autoreleasepool {
+        if (@available(iOS 11.0, *)) {
+            WKHTTPCookieStore *cookieStore = self.configuration.websiteDataStore.httpCookieStore;
+            [cookieStore setCookie:cookie completionHandler:nil];
+        }
+        NSHTTPCookieStorage *sharedCookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
+        [sharedCookieStorage setCookie:cookie];
+    }
+}
+
+- (void)insertCookies:(NSArray<NSHTTPCookie *> *)cookies
+{
+    if (cookies.count == 0) return;
+    for (NSHTTPCookie *cookie in cookies) {
+        [self insertCookie:cookie];
+    }
+}
+
++ (NSArray<NSHTTPCookie *> *)sharedCookieStorage
+{
+    NSMutableArray<NSHTTPCookie *> *mutableCookies = [NSMutableArray array];
+    //获取NSHTTPCookieStorage的cookies
+    NSHTTPCookieStorage *sharedCookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
+    if (sharedCookieStorage.cookies) {
+        [mutableCookies addObjectsFromArray:sharedCookieStorage.cookies];
+    }
+    return [mutableCookies copy];
+}
 
 + (void)clearCookies
 {

@@ -25,18 +25,6 @@ typedef NS_ENUM(NSUInteger, MAGWebViewNavigationType) {
     MAGWebViewNavigationTypeOther
 };
 
-typedef NS_OPTIONS(NSUInteger, MAGWebDataDetectorTypes) {
-    MAGWebDataDetectorTypeNone = 0,
-    MAGWebDataDetectorTypePhoneNumber = 1 << 0,
-    MAGWebDataDetectorTypeLink = 1 << 1,
-    MAGWebDataDetectorTypeAddress = 1 << 2,
-    MAGWebDataDetectorTypeCalendarEvent = 1 << 3,
-    MAGWebDataDetectorTypeTrackingNumber = 1 << 4,
-    MAGWebDataDetectorTypeFlightNumber = 1 << 5,
-    MAGWebDataDetectorTypeLookupSuggestion = 1 << 6,
-    MAGWebDataDetectorTypeAll = NSUIntegerMax,
-};
-
 UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 
 @protocol MAGWebView;
@@ -100,13 +88,23 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 
 @interface MAGWebViewConfiguration : NSObject
 
+/*
+ A WKWebViewConfiguration object is a collection of properties with
+ which to initialize a web view.
+ @helps Contains properties used to configure a @link WKWebView @/link.
+ 
+ The preference settings to be used by the WKWebView.
+ javaScriptCanOpenWindowsAutomatically is YES by default.
+ */
+@property (nonatomic, copy, readonly) WKWebViewConfiguration *wkConfiguration;
+
 /**
  The default value is YES.
  */
 @property (nonatomic) BOOL allowsInlineMediaPlayback;
 
 /**
- The default value is NO.
+ The default value is YES.
  */
 @property (nonatomic) BOOL mediaPlaybackRequiresUserAction;
 
@@ -116,48 +114,24 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 @property (nonatomic) BOOL mediaPlaybackAllowsAirPlay;
 
 /**
- An enum value indicating the type of data detection desired.
- @discussion The default value is MAGWebDataDetectorTypeNone.
- */
-@property (nonatomic) MAGWebDataDetectorTypes dataDetectorTypes;
-
-/*
- A Boolean value indicating whether the web view suppresses
- content rendering until it is fully loaded into memory.
- @discussion The default value is NO.
- */
-@property (nonatomic) BOOL suppressesIncrementalRendering;
-
-/*
- The preference settings to be used by the WKWebView.
- javaScriptCanOpenWindowsAutomatically is YES by default.
- */
-@property (nonatomic, strong) WKPreferences *preferences;
-
-/*
- The user content controller to associate with the WKWebView.
- */
-@property (nonatomic, strong) WKUserContentController *userContentController;
-
-/**
  An array contains white schemes that does not internally intercept.
  Default contain @"http", @"https"
  */
 @property (nonatomic, copy) NSArray<NSString *> *customWhiteSchemes;
 
 /**
- An array contains schemes that that needs internally intercept.
+ An array contains schemes that that needs needs be opened externally.
  Default contain @"tel", @"sms", @"mailto"
  */
-@property (nonatomic, copy) NSArray<NSString *> *customInterceptSchemes;
+@property (nonatomic, copy) NSArray<NSString *> *customExternalSchemes;
 
 /**
- An array contains http or https hosts that needs internally intercept.
+ An array contains http or https hosts that needs be opened externally.
  Default contain @"itunes.apple.com",
  @"itunesconnect.apple.com",
  @"appstoreconnect.apple.com"
  */
-@property (nonatomic, copy) NSArray<NSString *> *customInterceptHttpHosts;
+@property (nonatomic, copy) NSArray<NSString *> *customExternalHttpHosts;
 
 @end
 
@@ -231,7 +205,7 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 @property (nonatomic, assign, readonly) MAGWebContext webContext;
 
 /**
- Common configuration
+ MAGWebView common configuration
  */
 @property (nonatomic, strong, readonly) MAGWebViewConfiguration *configuration;
 
@@ -256,10 +230,24 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 @property (nonatomic, weak) id<MAGWebViewDelegate> delegate;
 
 - (instancetype)initWithWebContext:(MAGWebContext)webContext;
+- (instancetype)initWithConfiguration:(MAGWebViewConfiguration *)configuration;
+- (instancetype)initWithWebContext:(MAGWebContext)webContext configuration:(MAGWebViewConfiguration *)configuration;
 
 @end
 
 @interface WKWebView (MAGWebCookie)
+
+/**
+ sync cookie to WKHTTPCookieStore
+ */
++ (void)syncCookies:(WKHTTPCookieStore *)cookieStore API_AVAILABLE(ios(11.0));
+- (void)insertCookie:(NSHTTPCookie *)cookie;
+- (void)insertCookies:(NSArray<NSHTTPCookie *> *)cookies;
+
+/**
+ fetch cookies
+ */
++ (NSArray<NSHTTPCookie *> *)sharedCookieStorage;
 
 /**
  delete all cookies
