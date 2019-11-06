@@ -51,6 +51,12 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 @property (nonatomic, copy, readwrite) WKWebViewConfiguration *wkConfiguration;
 
+@property (nonatomic, copy, readwrite) NSArray<NSString *> *customWhiteSchemes;
+
+@property (nonatomic, copy, readwrite) NSArray<NSString *> *customExternalSchemes;
+
+@property (nonatomic, copy, readwrite) NSArray<NSString *> *customExternalHttpHosts;
+
 @end
 
 @implementation MAGWebViewConfiguration
@@ -62,10 +68,6 @@ MAGWebContext MAGWebViewInitialContext(void)
         _allowsInlineMediaPlayback = YES;
         _mediaPlaybackRequiresUserAction = YES;
         _mediaPlaybackAllowsAirPlay = YES;
-        
-        _customWhiteSchemes = [self internal_customWhiteSchemes];
-        _customExternalSchemes = [self internal_customExternalSchemes];
-        _customExternalHttpHosts = [self internal_customExternalHttpHosts];
     }
     return self;
 }
@@ -132,6 +134,108 @@ MAGWebContext MAGWebViewInitialContext(void)
     } else {
         configuration.mediaPlaybackAllowsAirPlay = _mediaPlaybackAllowsAirPlay;
     }
+}
+
+- (NSArray<NSString *> *)customWhiteSchemes
+{
+    if (!_customWhiteSchemes) {
+        _customWhiteSchemes = [self internal_customWhiteSchemes];
+    }
+    return _customWhiteSchemes;
+}
+
+- (void)addCustomWhiteSchemes:(NSArray<NSString *> *)schemes
+{
+    if (![schemes isKindOfClass:[NSArray class]]) return;
+    if (schemes.count == 0) return;
+    NSMutableArray<NSString *> *mutableList = [self.customWhiteSchemes mutableCopy];
+    for (NSString *scheme in schemes) {
+        if (scheme.length > 0 && ![mutableList containsObject:scheme]) {
+            [mutableList addObject:scheme];
+        }
+    }
+    _customWhiteSchemes = [mutableList copy];
+}
+
+- (void)removeCustomWhiteSchemes:(NSArray<NSString *> *)schemes
+{
+    if (![schemes isKindOfClass:[NSArray class]]) return;
+    if (schemes.count == 0) return;
+    NSMutableArray<NSString *> *mutableList = [self.customWhiteSchemes mutableCopy];
+    for (NSString *scheme in schemes) {
+        if (scheme.length > 0 && [mutableList containsObject:scheme]) {
+            [mutableList removeObject:scheme];
+        }
+    }
+    _customWhiteSchemes = [mutableList copy];
+}
+
+- (NSArray<NSString *> *)customExternalSchemes
+{
+    if (!_customExternalSchemes) {
+        _customExternalSchemes = [self internal_customExternalSchemes];
+    }
+    return _customExternalSchemes;
+}
+
+- (void)addCustomExternalSchemes:(NSArray<NSString *> *)schemes
+{
+    if (![schemes isKindOfClass:[NSArray class]]) return;
+    if (schemes.count == 0) return;
+    NSMutableArray<NSString *> *mutableList = [self.customExternalSchemes mutableCopy];
+    for (NSString *scheme in schemes) {
+        if (scheme.length > 0 && ![mutableList containsObject:scheme]) {
+            [mutableList addObject:scheme];
+        }
+    }
+    _customExternalSchemes = [mutableList copy];
+}
+
+- (void)removeCustomExternalSchemes:(NSArray<NSString *> *)schemes
+{
+    if (![schemes isKindOfClass:[NSArray class]]) return;
+    if (schemes.count == 0) return;
+    NSMutableArray<NSString *> *mutableList = [self.customExternalSchemes mutableCopy];
+    for (NSString *scheme in schemes) {
+        if (scheme.length > 0 && [mutableList containsObject:scheme]) {
+            [mutableList removeObject:scheme];
+        }
+    }
+    _customExternalSchemes = [mutableList copy];
+}
+
+- (NSArray<NSString *> *)customExternalHttpHosts
+{
+    if (!_customExternalHttpHosts) {
+        _customExternalHttpHosts = [self internal_customExternalHttpHosts];
+    }
+    return _customExternalHttpHosts;
+}
+
+- (void)addCustomExternalHttpHosts:(NSArray<NSString *> *)httpHosts
+{
+    if (![httpHosts isKindOfClass:[NSArray class]]) return;
+    if (httpHosts.count == 0) return;
+    NSMutableArray<NSString *> *mutableList = [self.customExternalHttpHosts mutableCopy];
+    for (NSString *host in httpHosts) {
+        if (host.length > 0 && ![mutableList containsObject:host]) {
+            [mutableList addObject:host];
+        }
+    }
+    _customExternalHttpHosts = [mutableList copy];
+}
+
+- (void)removeCustomExternalHttpHosts:(NSArray<NSString *> *)httpHosts
+{
+    if (![httpHosts isKindOfClass:[NSArray class]]) return;
+    if (httpHosts.count == 0) return;
+    NSMutableArray<NSString *> *mutableList = [self.customExternalHttpHosts mutableCopy];
+    for (NSString *host in httpHosts) {
+        if (host.length > 0 && [mutableList containsObject:host]) {
+            [mutableList removeObject:host];
+        }
+    }
+    _customExternalHttpHosts = [mutableList copy];
 }
 
 - (NSArray<NSString *> *)internal_customWhiteSchemes
@@ -514,11 +618,10 @@ MAGWebContext MAGWebViewInitialContext(void)
         NSString *requestScheme = requestURL.scheme;
         NSString *requestHost = requestURL.host;
         if (requestScheme.length > 0) {
-            if ([requestScheme hasPrefix:@"http"]) {
+            if ([requestScheme hasPrefix:@"http"] && requestHost.length > 0) {
+                //requestURL can be validated by internal_canOpenExternalURL, so we intercept requestHost
                 NSArray<NSString *> *supportedHosts = [self.configuration customExternalHttpHosts];
-                if (requestHost.length > 0) {
-                    result = [supportedHosts containsObject:requestHost];
-                }
+                result = [supportedHosts containsObject:requestHost];
             } else {
                 //tel, sms, mailto etc.
                 result = [self internal_canOpenExternalURL:requestURL];
@@ -527,6 +630,16 @@ MAGWebContext MAGWebViewInitialContext(void)
                     NSArray *whiteSchemes = [self.configuration customWhiteSchemes];
                     if (whiteSchemes.count > 0 && [whiteSchemes containsObject:requestScheme]) {
                         //don't intercept
+                        result = NO;
+                    }
+                } else {
+                    //system canOpenURL failed, it means requestURL contains other untrusted URLScheme
+                    NSString *validRequestPrefix = [NSString stringWithFormat:@"%@://", requestScheme];
+                    if ([requestURL.absoluteString hasPrefix:validRequestPrefix]) {
+                        //let user choose open URLScheme wether or not if URLScheme not be contained in customExternalSchemes
+                        result = YES;
+                    } else {
+                        //don't intercepts about:blank、data:xxxx
                         result = NO;
                     }
                 }
@@ -567,7 +680,11 @@ MAGWebContext MAGWebViewInitialContext(void)
     UIApplication *application = [UIApplication sharedApplication];
     if (@available(iOS 10.0, *)) {
         [application openURL:openURL options:@{} completionHandler:^(BOOL success) {
-            
+            if (success) {
+                NSLog(@"MAGWebView openURL success : %@", openURL);
+            } else {
+                NSLog(@"MAGWebView openURL failure : %@", openURL);
+            }
         }];
     } else {
         [application openURL:openURL];

@@ -116,14 +116,19 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 /**
  An array contains white schemes that does not internally intercept.
  Default contain @"http", @"https"
+ customExternalHttpHosts > customWhiteSchemes > customExternalSchemes
  */
-@property (nonatomic, copy) NSArray<NSString *> *customWhiteSchemes;
+@property (nonatomic, copy, readonly) NSArray<NSString *> *customWhiteSchemes;
+- (void)addCustomWhiteSchemes:(NSArray<NSString *> *)schemes;
+- (void)removeCustomWhiteSchemes:(NSArray<NSString *> *)schemes;
 
 /**
  An array contains schemes that that needs needs be opened externally.
  Default contain @"tel", @"sms", @"mailto"
  */
-@property (nonatomic, copy) NSArray<NSString *> *customExternalSchemes;
+@property (nonatomic, copy, readonly) NSArray<NSString *> *customExternalSchemes;
+- (void)addCustomExternalSchemes:(NSArray<NSString *> *)schemes;
+- (void)removeCustomExternalSchemes:(NSArray<NSString *> *)schemes;
 
 /**
  An array contains http or https hosts that needs be opened externally.
@@ -131,7 +136,9 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
  @"itunesconnect.apple.com",
  @"appstoreconnect.apple.com"
  */
-@property (nonatomic, copy) NSArray<NSString *> *customExternalHttpHosts;
+@property (nonatomic, copy, readonly) NSArray<NSString *> *customExternalHttpHosts;
+- (void)addCustomExternalHttpHosts:(NSArray<NSString *> *)httpHosts;
+- (void)removeCustomExternalHttpHosts:(NSArray<NSString *> *)httpHosts;
 
 @end
 
