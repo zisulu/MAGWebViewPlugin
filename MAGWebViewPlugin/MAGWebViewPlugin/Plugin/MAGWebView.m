@@ -93,6 +93,9 @@ MAGWebContext MAGWebViewInitialContext(void)
             configuration.mediaPlaybackRequiresUserAction = YES;
             configuration.mediaPlaybackAllowsAirPlay = YES;
         }
+        if (@available(iOS 13.0, *)) {
+            configuration.defaultWebpagePreferences.preferredContentMode = WKContentModeMobile;
+        }
         _wkConfiguration = configuration;
     }
     return _wkConfiguration;
