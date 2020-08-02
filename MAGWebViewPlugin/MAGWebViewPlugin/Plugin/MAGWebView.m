@@ -981,23 +981,7 @@ MAGWebContext MAGWebViewInitialContext(void)
         [self uiWebView].scalesPageToFit = scalesPageToFit;
     } else {
         if (_internal_scalesPageToFit == scalesPageToFit) return;
-        NSString *scaleScript =
-        @"var head = document.getElementsByTagName('head')[0];\
-        var hasViewPort = 0;\
-        var metas = head.getElementsByTagName('meta');\
-        for (var i = metas.length; i>=0 ; i--) {\
-        var m = metas[i];\
-        if (m.name == 'viewport') {\
-        hasViewPort = 1;\
-        break;\
-        }\
-        }; \
-        if(hasViewPort == 0) { \
-        var meta = document.createElement('meta'); \
-        meta.name = 'viewport'; \
-        meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'; \
-        head.appendChild(meta);\
-        }";
+        NSString *scaleScript = @"if(document.getElementsByTagName('head')){var hasViewPort = 0;var metas = document.getElementsByTagName('head')[0].getElementsByTagName('meta');for(var i = metas.length; i>=0 ; i--){var meta = metas[i];if(meta && meta.name == 'viewport'){hasViewPort = 1;break;}};if(hasViewPort == 0){var meta = document.createElement('meta');meta.setAttribute('name', 'viewport');meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');document.getElementsByTagName('head')[0].appendChild(meta);}};";
         WKUserContentController *userContentController = [self wkWebView].configuration.userContentController;
         NSMutableArray<WKUserScript *> *userScripts = [userContentController.userScripts mutableCopy];
         WKUserScript *targetUserScript = nil;
