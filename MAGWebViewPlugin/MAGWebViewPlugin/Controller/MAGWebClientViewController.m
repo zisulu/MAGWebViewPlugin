@@ -26,7 +26,7 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
     MAGWebViewConfiguration *configuration = [[MAGWebViewConfiguration alloc] init];
-    configuration.mediaPlaybackRequiresUserAction = NO;
+    configuration.allowsUserActionForMediaPlayback = NO;
     /**
     NSMutableArray<NSString *> *customWhiteSchemes = [configuration.customWhiteSchemes mutableCopy];
     NSArray *supportedProtocols = @[
@@ -35,8 +35,7 @@
     [customWhiteSchemes addObjectsFromArray:supportedProtocols];
     configuration.customWhiteSchemes = [customWhiteSchemes copy];
      */
-    MAGWebContext webContext = MAGWebViewInitialContext();
-    MAGWebView *webView = [[MAGWebView alloc] initWithWebContext:webContext configuration:configuration];
+    MAGWebView *webView = [[MAGWebView alloc] initWithConfiguration:configuration];
     [self.view addSubview:webView];
     [webView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.edges.equalTo(self.view);
@@ -67,7 +66,7 @@
     self.jsBridge = jsBridge;
 }
 
-- (BOOL)webView:(id<MAGWebView>)webView shouldStartLoadWithRequest:(nonnull NSURLRequest *)request navigationType:(MAGWebViewNavigationType)navigationType
+- (BOOL)webView:(id<MAGWebView>)webView shouldStartLoadWithRequest:(nonnull NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
 {
     NSLog(@"shouldStartLoadWithRequest");
     return YES;
@@ -82,16 +81,6 @@
 {
     [webView.scrollView.mj_header endRefreshing];
     NSLog(@"webViewDidFinishLoad");
-}
-
-- (void)webView:(id<MAGWebView>)webView didResetWithURL:(NSURL *)requestURL
-{
-    NSLog(@"didResetWithURL:%@", requestURL);
-    //更新UserAgent的时候，会被重新创建，所以可能需要重新设置
-    //注册jsBridge
-    [self registerJavascriptBridge];
-    //添加刷新
-    [self addRefreshComponent];
 }
 
 - (void)webView:(id<MAGWebView>)webView longPressGestureRecognized:(UILongPressGestureRecognizer *)longPressGestureRecognizer

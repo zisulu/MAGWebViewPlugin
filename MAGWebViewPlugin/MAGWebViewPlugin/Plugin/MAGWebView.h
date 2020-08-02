@@ -11,46 +11,27 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_ENUM(NSUInteger, MAGWebContext) {
-    MAGWebContextUIKit,     //context is UIWebView
-    MAGWebContextWebKit,    //context is WKWebView
-};
-
-typedef NS_ENUM(NSUInteger, MAGWebViewNavigationType) {
-    MAGWebViewNavigationTypeLinkClicked,
-    MAGWebViewNavigationTypeFormSubmitted,
-    MAGWebViewNavigationTypeBackForward,
-    MAGWebViewNavigationTypeReload,
-    MAGWebViewNavigationTypeFormResubmitted,
-    MAGWebViewNavigationTypeOther
-};
-
-UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
-
 @protocol MAGWebView;
 
 @protocol MAGWebViewDelegate <NSObject>
 
 @optional
 
-- (BOOL)webView:(id<MAGWebView>)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(MAGWebViewNavigationType)navigationType;
-- (void)webViewDidStartLoad:(id<MAGWebView>)webView;
-- (void)webViewDidFinishLoad:(id<MAGWebView>)webView;
-- (void)webView:(id<MAGWebView>)webView didFailLoadWithError:(NSError *)error;
+/// 这里方法命名需要避免和废弃API一样
+- (BOOL)webView:(id<MAGWebView>)webView shouldAllowWithRequest:(NSURLRequest *)request navigationType:(WKNavigationType)navigationType;
+- (void)webViewDidLoadStarted:(id<MAGWebView>)webView;
+- (void)webViewDidLoadFinished:(id<MAGWebView>)webView;
+- (void)webView:(id<MAGWebView>)webView didLoadFailedWithError:(NSError *)error;
 
-- (void)webView:(id<MAGWebView>)webView didUpdateProgress:(CGFloat)progress;
+- (void)webView:(id<MAGWebView>)webView didReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition disposition, NSURLCredential * _Nullable credential))completionHandler;
 - (void)webViewWebContentProcessDidTerminate:(id<MAGWebView>)webView;
+
 - (void)webView:(id<MAGWebView>)webView showAlertWithMessage:(NSString *)message completionHandler:(void (^)(void))completionHandler;
 - (void)webView:(id<MAGWebView>)webView showConfirmAlertWithMessage:(NSString *)message completionHandler:(void (^)(BOOL result))completionHandler;
 - (void)webView:(id<MAGWebView>)webView showTextInputAlertWithMessage:(NSString *)message placeholder:(NSString *)placeholder completionHandler:(void (^)(NSString *result))completionHandler;
 
-/**
- Do something after the UIWebView or WKWebView has been recreated.
- 
- @param webView MAGWebView
- @param requestURL requestURL
- */
-- (void)webView:(id<MAGWebView>)webView didResetWithURL:(NSURL *)requestURL;
+- (void)webView:(id<MAGWebView>)webView didUpdateTitle:(NSString *)title;
+- (void)webView:(id<MAGWebView>)webView didUpdateProgress:(CGFloat)progress;
 
 /**
  Used for update the whole UserAgent if needed.
@@ -80,12 +61,6 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 
 @end
 
-@interface MAGProcessPool : WKProcessPool
-
-+ (instancetype)sharedProcessPool;
-
-@end
-
 @interface MAGWebViewConfiguration : NSObject
 
 /*
@@ -106,12 +81,12 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 /**
  The default value is YES.
  */
-@property (nonatomic) BOOL mediaPlaybackRequiresUserAction;
+@property (nonatomic) BOOL allowsUserActionForMediaPlayback;
 
 /**
  The default value is YES.
  */
-@property (nonatomic) BOOL mediaPlaybackAllowsAirPlay;
+@property (nonatomic) BOOL allowsAirPlayForMediaPlayback;
 
 /**
  An array contains white schemes that does not internally intercept.
@@ -155,61 +130,33 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 @property (nonatomic, assign, readonly) BOOL canGoBack;
 @property (nonatomic, assign, readonly) BOOL canGoForward;
 @property (nonatomic, readonly) double estimatedProgress;
-@property (nonatomic, assign) BOOL scalesPageToFit;
+@property (nonatomic, assign) BOOL allowsLinkPreview;
 
-- (void)loadRequest:(NSURLRequest *)request;
-- (void)loadHTMLString:(NSString *)string baseURL:(nullable NSURL *)baseURL;
+@property (nullable, nonatomic, copy) NSString *customUserAgent;
 
-/**
- For UIWebView: iOS 8.0 and later
- For WKWebView: iOS 9.0 and later
- */
-- (void)loadData:(NSData *)data MIMEType:(NSString *)MIMEType textEncodingName:(NSString *)textEncodingName baseURL:(NSURL *)baseURL;
+- (nullable WKNavigation *)loadRequest:(NSURLRequest *)request;
+- (nullable WKNavigation *)loadHTMLString:(NSString *)string baseURL:(nullable NSURL *)baseURL;
 
-/**
- For WKWebView Only
- */
-- (void)loadFileURL:(NSURL *)URL allowingReadAccessToURL:(NSURL *)readAccessURL API_AVAILABLE(ios(9.0));
+- (nullable WKNavigation *)loadData:(NSData *)data MIMEType:(NSString *)MIMEType characterEncodingName:(NSString *)characterEncodingName baseURL:(NSURL *)baseURL;
 
-- (void)reload;
-- (void)reloadFromOrigin;
+- (nullable WKNavigation *)loadFileURL:(NSURL *)URL allowingReadAccessToURL:(NSURL *)readAccessURL;
+
+- (nullable WKNavigation *)reload;
+- (nullable WKNavigation *)reloadFromOrigin;
 - (void)stopLoading;
 
-- (void)goBack;
-- (void)goForward;
-- (void)gobackWithStep:(NSInteger)step;
+- (nullable WKNavigation *)goBack;
+- (nullable WKNavigation *)goForward;
+- (nullable WKNavigation *)goBackWithStep:(NSInteger)step;
 
 - (NSInteger)countOfHistory;
 
-/**
- UIWebView or WKWebView support both
- For UIWebView is sync
- for WKWebView is async
- */
 - (void)evaluateJavaScript:(NSString *)javaScriptString
          completionHandler:(void (^ _Nullable)(id _Nullable response, NSError *_Nullable error))completionHandler;
 
-/**
- For UIWebView only
- */
-- (NSString *)stringByEvaluatingJavaScriptFromString:(NSString *)javaScriptString;
-
 /// Custom
 
-/**
- UIWebView or WKWebView
- */
-@property (nonatomic, strong, readonly) id webView;
-
-/**
- if don't use -initWithWebContext to initialize, MAGWebView will init default type:
- 1.iOS 8.x support UIWebView only
- 2.iOS 9.0 - iOS 11.x
- -UIWebView or WKWebView support both，default use WKWebView.
- -You can change webViewType to switch after init, but must before call any methods.
- 3.iOS 12.0 ~ support WKWebView only
- */
-@property (nonatomic, assign, readonly) MAGWebContext webContext;
+@property (nonatomic, strong, readonly) WKWebView *webView;
 
 /**
  MAGWebView common configuration
@@ -217,28 +164,26 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 @property (nonatomic, strong, readonly) MAGWebViewConfiguration *configuration;
 
 /**
- longPressGestureRecognizer related to UIWebView or WKWebView
+ longPressGestureRecognizer related to WKWebView
  */
 @property (nonatomic, strong, readonly) UILongPressGestureRecognizer *longPressGestureRecognizer;
 
 @end
 
-/**
- Feature            UIWebView       WKWebView
- JS执行速度             慢               快
- 内存占用               大               小
- 进度条                无               有
- Cookie             自动存储         需手动存储
- 缓存                 有               无
- NSURLProtocol拦截    可以              不可以
- */
 @interface MAGWebView : UIView<MAGWebView>
 
 @property (nonatomic, weak) id<MAGWebViewDelegate> delegate;
 
-- (instancetype)initWithWebContext:(MAGWebContext)webContext;
 - (instancetype)initWithConfiguration:(MAGWebViewConfiguration *)configuration;
-- (instancetype)initWithWebContext:(MAGWebContext)webContext configuration:(MAGWebViewConfiguration *)configuration;
+
+- (void)updateUserAgent:(NSString *)userAgent completionHandler:(void (^ _Nullable)(void))completionHandler;
+
+@end
+
+@interface WKWebView (MAGWebView)
+
++ (WKWebView *)mag_webView;
++ (WKWebView *)mag_webViewWithConfiguration:(MAGWebViewConfiguration *)configuration;
 
 @end
 
@@ -274,6 +219,24 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 
 @end
 
+@interface WKUserContentController (MAGWebScript)
+
++ (NSString *)mag_webPageScaleFitScript;
+- (void)mag_addScriptAtDocumentEnd:(NSString *)script;
+- (void)mag_addScriptForMainFrameAtDocumentEnd:(NSString *)script;
+- (void)mag_addScriptAtDocumentStart:(NSString *)script;
+- (void)mag_addScriptForMainFrameDocumentStart:(NSString *)script;
+- (void)mag_addScript:(NSString *)script injectionTime:(WKUserScriptInjectionTime)injectionTime forMainFrameOnly:(BOOL)forMainFrameOnly;
+- (void)mag_removeScript:(NSString *)script;
+
+@end
+
+@interface WKProcessPool (MAGWebView)
+
++ (WKProcessPool *)mag_processPool;
+
+@end
+
 @interface NSHTTPCookie (MAGWebCookie)
 
 - (NSString *)mag_cookieScriptValue;
@@ -285,7 +248,7 @@ UIKIT_EXTERN MAGWebContext MAGWebViewInitialContext(void);
 /**
  delete all cookies
  */
-+ (void)clearCookies;
++ (void)mag_clearCookies;
 
 @end
 

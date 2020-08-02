@@ -18,35 +18,6 @@ dispatch_async(dispatch_get_main_queue(), block);\
 }
 #endif
 
-MAGWebContext MAGWebViewInitialContext(void)
-{
-    MAGWebContext webContext = MAGWebContextUIKit;
-    if (@available(iOS 9.0, *)) {
-        if (@available(iOS 12.0, *)) {
-            webContext = MAGWebContextWebKit;
-        } else {
-            webContext = MAGWebContextWebKit;
-        }
-    } else {
-        webContext = MAGWebContextUIKit;
-    }
-    return webContext;
-}
-
-@implementation MAGProcessPool
-
-+ (instancetype)sharedProcessPool
-{
-    static MAGProcessPool *sharedProcessPool = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        sharedProcessPool = [[MAGProcessPool alloc] init];
-    });
-    return sharedProcessPool;
-}
-
-@end
-
 @interface MAGWebViewConfiguration ()
 
 @property (nonatomic, copy, readwrite) WKWebViewConfiguration *wkConfiguration;
@@ -66,8 +37,8 @@ MAGWebContext MAGWebViewInitialContext(void)
     self = [super init];
     if (self) {
         _allowsInlineMediaPlayback = YES;
-        _mediaPlaybackRequiresUserAction = YES;
-        _mediaPlaybackAllowsAirPlay = YES;
+        _allowsUserActionForMediaPlayback = YES;
+        _allowsAirPlayForMediaPlayback = YES;
     }
     return self;
 }
@@ -81,18 +52,14 @@ MAGWebContext MAGWebViewInitialContext(void)
         WKPreferences *preferences = [[WKPreferences alloc] init];
         preferences.javaScriptCanOpenWindowsAutomatically = YES;
         configuration.preferences = preferences;
-        configuration.processPool = [MAGProcessPool sharedProcessPool];
+        configuration.processPool = [WKProcessPool mag_processPool];
         configuration.allowsInlineMediaPlayback = YES;
         if (@available(iOS 10.0, *)) {
             configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeAll;
-            configuration.allowsAirPlayForMediaPlayback = YES;
-        } else if (@available(iOS 9.0, *)) {
-            configuration.requiresUserActionForMediaPlayback = YES;
-            configuration.allowsAirPlayForMediaPlayback = YES;
         } else {
-            configuration.mediaPlaybackRequiresUserAction = YES;
-            configuration.mediaPlaybackAllowsAirPlay = YES;
+            configuration.requiresUserActionForMediaPlayback = YES;
         }
+        configuration.allowsAirPlayForMediaPlayback = YES;
         if (@available(iOS 13.0, *)) {
             configuration.defaultWebpagePreferences.preferredContentMode = WKContentModeMobile;
         }
@@ -109,34 +76,28 @@ MAGWebContext MAGWebViewInitialContext(void)
     configuration.allowsInlineMediaPlayback = _allowsInlineMediaPlayback;
 }
 
-- (void)setMediaPlaybackRequiresUserAction:(BOOL)mediaPlaybackRequiresUserAction
+- (void)setAllowsUserActionForMediaPlayback:(BOOL)allowsUserActionForMediaPlayback
 {
-    if (_mediaPlaybackRequiresUserAction == mediaPlaybackRequiresUserAction) return;
-    _mediaPlaybackRequiresUserAction = mediaPlaybackRequiresUserAction;
+    if (_allowsUserActionForMediaPlayback == allowsUserActionForMediaPlayback) return;
+    _allowsUserActionForMediaPlayback = allowsUserActionForMediaPlayback;
     WKWebViewConfiguration *configuration = self.wkConfiguration;
     if (@available(iOS 10.0, *)) {
-        if (_mediaPlaybackRequiresUserAction) {
+        if (_allowsUserActionForMediaPlayback) {
             configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeAll;
         } else {
             configuration.mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeNone;
         }
-    } else if (@available(iOS 9.0, *)) {
-        configuration.requiresUserActionForMediaPlayback = _mediaPlaybackRequiresUserAction;
     } else {
-        configuration.mediaPlaybackRequiresUserAction = _mediaPlaybackRequiresUserAction;
+        configuration.requiresUserActionForMediaPlayback = _allowsUserActionForMediaPlayback;
     }
 }
 
-- (void)setMediaPlaybackAllowsAirPlay:(BOOL)mediaPlaybackAllowsAirPlay
+- (void)setAllowsAirPlayForMediaPlayback:(BOOL)allowsAirPlayForMediaPlayback
 {
-    if (_mediaPlaybackAllowsAirPlay == mediaPlaybackAllowsAirPlay) return;
-    _mediaPlaybackAllowsAirPlay = mediaPlaybackAllowsAirPlay;
+    if (_allowsAirPlayForMediaPlayback == allowsAirPlayForMediaPlayback) return;
+    _allowsAirPlayForMediaPlayback = allowsAirPlayForMediaPlayback;
     WKWebViewConfiguration *configuration = self.wkConfiguration;
-    if (@available(iOS 9.0, *)) {
-        configuration.allowsAirPlayForMediaPlayback = _mediaPlaybackAllowsAirPlay;
-    } else {
-        configuration.mediaPlaybackAllowsAirPlay = _mediaPlaybackAllowsAirPlay;
-    }
+    configuration.allowsAirPlayForMediaPlayback = _allowsAirPlayForMediaPlayback;
 }
 
 - (NSArray<NSString *> *)customWhiteSchemes
@@ -244,42 +205,40 @@ MAGWebContext MAGWebViewInitialContext(void)
 - (NSArray<NSString *> *)internal_customWhiteSchemes
 {
     return @[
-             @"http",
-             @"https",
-             ];
+        @"http",
+        @"https",
+    ];
 }
 
 - (NSArray<NSString *> *)internal_customExternalSchemes
 {
     return @[
-             @"tel",
-             @"sms",
-             @"mailto",
-             ];;
+        @"tel",
+        @"sms",
+        @"mailto",
+    ];;
 }
 
 - (NSArray<NSString *> *)internal_customExternalHttpHosts
 {
     return @[
-             @"itunes.apple.com",
-             @"itunesconnect.apple.com",
-             @"appstoreconnect.apple.com",
-             ];
+        @"itunes.apple.com",
+        @"itunesconnect.apple.com",
+        @"appstoreconnect.apple.com",
+    ];
 }
 
 @end
 
-@interface MAGWebView ()<UIWebViewDelegate, WKNavigationDelegate, WKUIDelegate, UIGestureRecognizerDelegate>
+@interface MAGWebView ()<WKNavigationDelegate, WKUIDelegate, UIGestureRecognizerDelegate>
 
 @property (nonatomic, copy, readwrite, nullable) NSString *title;
 @property (nonatomic, strong, readwrite, nullable) NSURLRequest *originRequest;
 @property (nonatomic, strong, readwrite, nullable) NSURLRequest *currentRequest;
 @property (nonatomic, readwrite) double estimatedProgress;
-@property (nonatomic, assign) BOOL internal_scalesPageToFit;
 
-@property (nonatomic, strong, readwrite) id webView;
+@property (nonatomic, strong, readwrite) WKWebView *webView;
 @property (nonatomic, strong, readwrite) UILongPressGestureRecognizer *longPressGestureRecognizer;
-@property (nonatomic, assign, readwrite) MAGWebContext webContext;
 @property (nonatomic, strong, readwrite) MAGWebViewConfiguration *configuration;
 
 @end
@@ -290,7 +249,6 @@ MAGWebContext MAGWebViewInitialContext(void)
 {
     self = [super initWithCoder:aDecoder];
     if (self) {
-        _webContext = MAGWebViewInitialContext();
         [self internal_setupConfiguration];
         [self internal_setupWebView];
     }
@@ -301,30 +259,16 @@ MAGWebContext MAGWebViewInitialContext(void)
 {
     self = [super initWithFrame:frame];
     if (self) {
-        _webContext = MAGWebViewInitialContext();
         [self internal_setupConfiguration];
         [self internal_setupWebView];
     }
     return self;
 }
 
-- (instancetype)initWithWebContext:(MAGWebContext)webContext
-{
-    MAGWebViewConfiguration *configuration = [[MAGWebViewConfiguration alloc] init];
-    return [self initWithWebContext:webContext configuration:configuration];
-}
-
 - (instancetype)initWithConfiguration:(MAGWebViewConfiguration *)configuration
-{
-    MAGWebContext webContext = MAGWebViewInitialContext();
-    return [self initWithWebContext:webContext configuration:configuration];
-}
-
-- (instancetype)initWithWebContext:(MAGWebContext)webContext configuration:(MAGWebViewConfiguration *)configuration
 {
     self = [super initWithFrame:CGRectZero];
     if (self) {
-        _webContext = webContext;
         if (!configuration) {
             [self internal_setupConfiguration];
         } else {
@@ -343,85 +287,28 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 - (void)internal_setupWebView
 {
-    if ([self isUIWebView]) {
-        [self initUIWebView];
-    } else {
-        [self initWKWebView];
-    }
-    [self setScalesPageToFit:YES];
+    [self addSubview:self.webView];
+    [self.webView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.edges.equalTo(self);
+    }];
     [self addWebLongPressRecognizer];
 }
 
-- (void)internal_resetWebView
+- (WKWebView *)webView
 {
-    [self internal_resetWebViewWithURL:nil];
-}
-
-- (void)internal_resetWebViewWithURL:(NSURL *)requestURL
-{
-    if (self.webView) {
-        if ([self isWKWebView]) {
-            //remove KVO, avoid crash
-            [[self wkWebView] removeObserver:self forKeyPath:@"estimatedProgress"];
+    if (!_webView) {
+        WKWebView *webView = [WKWebView mag_webViewWithConfiguration:_configuration];
+        [webView addObserver:self forKeyPath:@"title" options:NSKeyValueObservingOptionOld|NSKeyValueObservingOptionNew context:nil];
+        [webView addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:nil];
+        if (@available(iOS 11.0, *)) {
+            WKHTTPCookieStore *cookieStore = webView.configuration.websiteDataStore.httpCookieStore;
+            [WKWebView syncCookies:cookieStore];
         }
-        [self.webView removeFromSuperview];
-        self.webView = nil;
+        webView.UIDelegate = self;
+        webView.navigationDelegate = self;
+        _webView = webView;
     }
-    [self internal_setupWebView];
-    if (self.delegate && [self.delegate respondsToSelector:@selector(webView:didResetWithURL:)]) {
-        [self.delegate webView:self didResetWithURL:requestURL];
-    }
-}
-
-- (void)initUIWebView
-{
-    MAGWebViewConfiguration *magConfiguration = _configuration;
-    UIWebView *webView = [[UIWebView alloc] initWithFrame:self.bounds];
-    webView.opaque = NO;
-    webView.clipsToBounds = NO;
-    webView.allowsInlineMediaPlayback = magConfiguration.allowsInlineMediaPlayback;
-    webView.mediaPlaybackRequiresUserAction = magConfiguration.mediaPlaybackRequiresUserAction;
-    webView.mediaPlaybackAllowsAirPlay = magConfiguration.mediaPlaybackAllowsAirPlay;
-    webView.keyboardDisplayRequiresUserAction = NO;
-    webView.backgroundColor = [UIColor clearColor];
-    UIScrollView *scrollView = webView.scrollView;
-    scrollView.clipsToBounds = NO;
-    scrollView.keyboardDismissMode = UIScrollViewKeyboardDismissModeInteractive;
-    scrollView.decelerationRate = UIScrollViewDecelerationRateNormal;
-    scrollView.scrollsToTop = YES;
-    webView.delegate = self;
-    [self addSubview:webView];
-    [webView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.edges.equalTo(self);
-    }];
-    self.webView = webView;
-}
-
-- (void)initWKWebView
-{
-    MAGWebViewConfiguration *magConfiguration = _configuration;
-    WKWebViewConfiguration *wkConfiguration = magConfiguration.wkConfiguration;
-    WKWebView *webView = [[WKWebView alloc] initWithFrame:self.bounds configuration:wkConfiguration];
-    webView.opaque = NO;
-    webView.clipsToBounds = NO;
-    webView.backgroundColor = [UIColor clearColor];
-    UIScrollView *scrollView = webView.scrollView;
-    scrollView.clipsToBounds = NO;
-    scrollView.keyboardDismissMode = UIScrollViewKeyboardDismissModeInteractive;
-    scrollView.decelerationRate = UIScrollViewDecelerationRateNormal;
-    scrollView.scrollsToTop = YES;
-    [webView addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:nil];
-    if (@available(iOS 11.0, *)) {
-        WKHTTPCookieStore *cookieStore = webView.configuration.websiteDataStore.httpCookieStore;
-        [WKWebView syncCookies:cookieStore];
-    }
-    webView.UIDelegate = self;
-    webView.navigationDelegate = self;
-    [self addSubview:webView];
-    [webView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.edges.equalTo(self);
-    }];
-    self.webView = webView;
+    return _webView;
 }
 
 - (void)addWebLongPressRecognizer
@@ -448,67 +335,22 @@ MAGWebContext MAGWebViewInitialContext(void)
     }
 }
 
-- (void)internal_syncUserAgent:(NSString *)userAgent
-{
-    if (![userAgent isKindOfClass:[NSString class]]) return;
-    NSDictionary *userAgentValues = @{
-                                      @"UserAgent" : userAgent,
-                                      };
-    [[NSUserDefaults standardUserDefaults] registerDefaults:userAgentValues];
-}
-
-- (BOOL)isUIWebView
-{
-    return self.webContext == MAGWebContextUIKit;
-}
-
-- (BOOL)isWKWebView
-{
-    return self.webContext == MAGWebContextWebKit;
-}
-
-- (UIWebView *)uiWebView
-{
-    return (UIWebView *)self.webView;
-}
-
-- (WKWebView *)wkWebView
-{
-    return (WKWebView *)self.webView;
-}
-
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context
 {
-    if ([keyPath isEqualToString:@"estimatedProgress"]) {
-        if (object == self.webView) {
-            self.estimatedProgress = [change[NSKeyValueChangeNewKey] doubleValue];
-            [self internal_webViewDidUpdateProgress:self.estimatedProgress];
+    if (object == self.webView) {
+        if ([keyPath isEqualToString:@"title"]) {
+            NSString *oldValue = change[NSKeyValueChangeOldKey];
+            NSString *newValue = change[NSKeyValueChangeNewKey];
+            if (![newValue isEqualToString:oldValue]) {
+                NSString *title = [NSString stringWithFormat:@"%@", newValue];
+                [self internal_webViewDidUpdateTitle:title];
+            }
+        } else if ([keyPath isEqualToString:@"estimatedProgress"]) {
+            double estimatedProgress = [change[NSKeyValueChangeNewKey] doubleValue];
+            self.estimatedProgress = estimatedProgress;
+            [self internal_webViewDidUpdateProgress: self.estimatedProgress];
         }
     }
-}
-
-#pragma mark ---------- UIWebViewDelegate
-
-- (void)webViewDidStartLoad:(UIWebView *)webView
-{
-    [self internal_webViewDidStartLoad];
-}
-
-- (void)webViewDidFinishLoad:(UIWebView *)webView
-{
-    [self internal_webViewDidFinishLoad];
-}
-
-- (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error
-{
-    [self internal_webViewDidFailLoadWithError:error];
-}
-
-- (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
-{
-    self.currentRequest = request;
-    BOOL result = [self internal_webViewShouldStartLoadWithRequest:request navigationType:navigationType];
-    return result;
 }
 
 #pragma mark ----------- WKNavigationDelegate
@@ -518,10 +360,10 @@ MAGWebContext MAGWebViewInitialContext(void)
     self.currentRequest = navigationAction.request;
     BOOL result = [self internal_webViewCanOpenRequestURL:self.currentRequest.URL];
     if (result) {
-        //internal intercept
+        /// internal intercept
         [self internal_webViewOpenRequestURL:self.currentRequest.URL];
     }
-    result = [self internal_webViewShouldStartLoadWithRequest:self.currentRequest navigationType:navigationAction.navigationType];
+    result = [self internal_webViewShouldAllowWithRequest:self.currentRequest navigationType:navigationAction.navigationType];
     if (result) {
         if (!navigationAction.targetFrame) {
             [webView loadRequest:self.currentRequest];
@@ -544,28 +386,32 @@ MAGWebContext MAGWebViewInitialContext(void)
         NSArray *cookies =[NSHTTPCookie cookiesWithResponseHeaderFields:[response allHeaderFields] forURL:response.URL];
         [webView insertCookies:cookies];
     }
-
     decisionHandler(WKNavigationResponsePolicyAllow);
 }
 
 - (void)webView:(WKWebView *)webView didStartProvisionalNavigation:(WKNavigation *)navigation
 {
-    [self internal_webViewDidStartLoad];
+    [self internal_webViewDidLoadStarted];
 }
 
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation
 {
-    [self internal_webViewDidFinishLoad];
+    [self internal_webViewDidLoadFinished];
 }
 
 - (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error
 {
-    [self internal_webViewDidFailLoadWithError:error];
+    [self internal_webViewDidLoadFailedWithError:error];
 }
 
 - (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error
 {
-    [self internal_webViewDidFailLoadWithError:error];
+    [self internal_webViewDidLoadFailedWithError:error];
+}
+
+- (void)webView:(WKWebView *)webView didReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable))completionHandler
+{
+    [self internal_webViewDidReceiveAuthenticationChallenge:challenge completionHandler:completionHandler];
 }
 
 - (void)webViewWebContentProcessDidTerminate:(WKWebView *)webView
@@ -578,6 +424,7 @@ MAGWebContext MAGWebViewInitialContext(void)
 - (WKWebView *)webView:(WKWebView *)webView createWebViewWithConfiguration:(WKWebViewConfiguration *)configuration forNavigationAction:(WKNavigationAction *)navigationAction windowFeatures:(WKWindowFeatures *)windowFeatures
 {
     if (!navigationAction.targetFrame.isMainFrame) {
+        self.currentRequest = navigationAction.request;
         [webView loadRequest:self.currentRequest];
     }
     return nil;
@@ -600,17 +447,17 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 #pragma mark ---------- internal MAGWebView Delegate
 
-- (void)internal_webViewDidFinishLoad
+- (void)internal_webViewDidLoadFinished
 {
-    if (self.delegate && [self.delegate respondsToSelector:@selector(webViewDidFinishLoad:)]) {
-        [self.delegate webViewDidFinishLoad:self];
+    if (self.delegate && [self.delegate respondsToSelector:@selector(webViewDidLoadFinished:)]) {
+        [self.delegate webViewDidLoadFinished:self];
     }
 }
 
-- (void)internal_webViewDidStartLoad
+- (void)internal_webViewDidLoadStarted
 {
-    if (self.delegate && [self.delegate respondsToSelector:@selector(webViewDidStartLoad:)]) {
-        [self.delegate webViewDidStartLoad:self];
+    if (self.delegate && [self.delegate respondsToSelector:@selector(webViewDidLoadStarted:)]) {
+        [self.delegate webViewDidLoadStarted:self];
     }
 }
 
@@ -622,27 +469,27 @@ MAGWebContext MAGWebViewInitialContext(void)
         NSString *requestHost = requestURL.host;
         if (requestScheme.length > 0) {
             if ([requestScheme hasPrefix:@"http"] && requestHost.length > 0) {
-                //requestURL can be validated by internal_canOpenExternalURL, so we intercept requestHost
+                /// requestURL can be validated by internal_canOpenExternalURL, so we intercept requestHost
                 NSArray<NSString *> *supportedHosts = [self.configuration customExternalHttpHosts];
                 result = [supportedHosts containsObject:requestHost];
             } else {
-                //tel, sms, mailto etc.
+                /// tel, sms, mailto etc.
                 result = [self internal_canOpenExternalURL:requestURL];
                 if (result) {
                     //we also don't want some schemes to be intercepted.
                     NSArray *whiteSchemes = [self.configuration customWhiteSchemes];
                     if (whiteSchemes.count > 0 && [whiteSchemes containsObject:requestScheme]) {
-                        //don't intercept
+                        /// don't intercept
                         result = NO;
                     }
                 } else {
-                    //system canOpenURL failed, it means requestURL contains other untrusted URLScheme
+                    /// system canOpenURL failed, it means requestURL contains other untrusted URLScheme
                     NSString *validRequestPrefix = [NSString stringWithFormat:@"%@://", requestScheme];
                     if ([requestURL.absoluteString hasPrefix:validRequestPrefix]) {
-                        //let user choose open URLScheme wether or not if URLScheme not be contained in customExternalSchemes
+                        /// let user choose open URLScheme wether or not if URLScheme not be contained in customExternalSchemes
                         result = YES;
                     } else {
-                        //don't intercepts about:blank、data:xxxx
+                        /// don't intercepts about:blank、data:xxxx
                         result = NO;
                     }
                 }
@@ -657,10 +504,10 @@ MAGWebContext MAGWebViewInitialContext(void)
     NSString *requestScheme = requestURL.scheme;
     NSArray *interceptSchemes = [self.configuration customExternalSchemes];
     if (interceptSchemes.count > 0 && [interceptSchemes containsObject:requestScheme]) {
-        //intercept directly
+        /// intercept directly
         [self internal_openExternalURL:requestURL];
     } else {
-        //the outside decides whether to intercept or not
+        /// the outside decides whether to intercept or not
         if (self.delegate && [self.delegate respondsToSelector:@selector(webView:openExternalURL:completionHandler:)]) {
             __weak typeof(self)wself = self;
             [self.delegate webView:self openExternalURL:requestURL completionHandler:^(BOOL result) {
@@ -694,23 +541,84 @@ MAGWebContext MAGWebViewInitialContext(void)
     }
 }
 
-- (void)internal_webViewDidFailLoadWithError:(NSError *)error
+- (void)internal_webViewDidLoadFailedWithError:(NSError *)error
 {
-    if (self.delegate && [self.delegate respondsToSelector:@selector(webView:didFailLoadWithError:)]) {
-        [self.delegate webView:self didFailLoadWithError:error];
+    if (self.delegate && [self.delegate respondsToSelector:@selector(webView:didLoadFailedWithError:)]) {
+        [self.delegate webView:self didLoadFailedWithError:error];
     }
 }
 
-- (BOOL)internal_webViewShouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(NSInteger)navigationType
+- (BOOL)internal_webViewShouldAllowWithRequest:(NSURLRequest *)request navigationType:(WKNavigationType)navigationType
 {
     BOOL result = YES;
-    if (self.delegate && [self.delegate respondsToSelector:@selector(webView:shouldStartLoadWithRequest:navigationType:)]) {
-        if (navigationType == -1) {
-            navigationType = MAGWebViewNavigationTypeOther;
-        }
-        result = [self.delegate webView:self shouldStartLoadWithRequest:request navigationType:navigationType];
+    if (self.delegate && [self.delegate respondsToSelector:@selector(webView:shouldAllowWithRequest:navigationType:)]) {
+        result = [self.delegate webView:self shouldAllowWithRequest:request navigationType:navigationType];
     }
     return result;
+}
+
+- (void)internal_webViewDidReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge completionHandler:(void (^)(NSURLSessionAuthChallengeDisposition, NSURLCredential * _Nullable))completionHandler
+{
+    if (self.delegate && [self.delegate respondsToSelector:@selector(internal_webViewDidReceiveAuthenticationChallenge:completionHandler:)]) {
+        [self.delegate webView:self didReceiveAuthenticationChallenge:challenge completionHandler:completionHandler];
+    } else {
+        NSString *authenticationMethod = challenge.protectionSpace.authenticationMethod;
+        /// determine whether the certificate type returned by the server is server trust
+        if ([authenticationMethod isEqualToString:NSURLAuthenticationMethodServerTrust]) {
+            SecTrustRef secTrustRef = challenge.protectionSpace.serverTrust;
+            /// secTrustRef is empty or not
+            if (secTrustRef != NULL) {
+                SecTrustResultType result;
+                OSErr er = SecTrustEvaluate(secTrustRef, &result);
+                if (er != noErr) {
+                    completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace,nil);
+                    return;
+                } else {
+                    if (result == kSecTrustResultRecoverableTrustFailure) {
+                        /// the certificate is not trusted
+                        /**CFArrayRef secTrustProperties = SecTrustCopyProperties(secTrustRef);
+                        NSArray *secTrustArray = CFBridgingRelease(secTrustProperties);
+                        NSMutableString *errorStr = [NSMutableString string];
+                        for (NSInteger i=0;i<secTrustArray.count;i++){
+                            NSDictionary *secTrustData = [secTrustArray objectAtIndex:i];
+                            if (i != 0) {
+                                [errorStr appendString:@" "];
+                            }
+                            NSString *secTrustValue = (NSString *)(secTrustData[@"value"]);
+                            [errorStr appendString:secTrustValue];
+                        }
+                        SecCertificateRef certRef = SecTrustGetCertificateAtIndex(secTrustRef, 0);
+                        CFStringRef cfCertSummaryRef = SecCertificateCopySubjectSummary(certRef);
+                        NSString *certSummary = (NSString *)CFBridgingRelease(cfCertSummaryRef);
+                        NSString *message = [NSString stringWithFormat:@"该服务器无法验证，是否通过标识为：%@ 证书为：%@的验证. \n%@" , self.webView.URL.host, certSummary, errorStr];
+                        [self internal_webViewShowConfirmAlertWithMessage:message completionHandler:^(BOOL result) {
+                            if (result) {
+                                NSURLCredential *credential = [NSURLCredential credentialForTrust:secTrustRef];
+                                completionHandler(NSURLSessionAuthChallengeUseCredential, credential);
+                            } else {
+                                completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, nil);
+                            }
+                        }];**/
+                        /// 这里不再询问用户，直接主动信任
+                        NSURLCredential *credential = [NSURLCredential credentialForTrust:secTrustRef];
+                        completionHandler(NSURLSessionAuthChallengeUseCredential, credential);
+                        return;
+                    } else {
+                        /// certificate is trusted
+                        NSURLCredential *credential = [NSURLCredential credentialForTrust:secTrustRef];
+                        completionHandler(NSURLSessionAuthChallengeUseCredential, credential);
+                        return;
+                    }
+                }
+            } else {
+                /// secTrustRef is empty
+                completionHandler(NSURLSessionAuthChallengeRejectProtectionSpace, nil);
+            }
+        } else {
+            /// non-server trust
+            completionHandler(NSURLSessionAuthChallengeCancelAuthenticationChallenge, nil);
+        }
+    }
 }
 
 - (void)internal_webViewWebContentProcessDidTerminate
@@ -741,6 +649,13 @@ MAGWebContext MAGWebViewInitialContext(void)
     }
 }
 
+- (void)internal_webViewDidUpdateTitle:(NSString *)title
+{
+    if (self.delegate && [self.delegate respondsToSelector:@selector(webView:didUpdateTitle:)]) {
+        [self.delegate webView:self didUpdateTitle:title];
+    }
+}
+
 - (void)internal_webViewDidUpdateProgress:(double)progress
 {
     if (self.delegate && [self.delegate respondsToSelector:@selector(webView:didUpdateProgress:)]) {
@@ -748,306 +663,238 @@ MAGWebContext MAGWebViewInitialContext(void)
     }
 }
 
+- (void)internal_webViewUserAgentUpdateWithURL:(NSURL *)requestURL completionHandler:(void(^)(void))completionHandler
+{
+    if ([self internal_shouldUpdateWebViewUserAgent]) {
+        __weak typeof(self) weakSelf = self;
+        [self.delegate webView:self userAgentUpdateWithURL:requestURL completionHandler:^(NSString * _Nullable userAgent) {
+            __strong typeof(weakSelf) strongSelf = weakSelf;
+            [strongSelf updateUserAgent:userAgent completionHandler:completionHandler];
+        }];
+    }
+}
+
+- (BOOL)internal_shouldUpdateWebViewUserAgent
+{
+    BOOL shouldUpdateUserAgent = self.delegate && [self.delegate respondsToSelector:@selector(webView:userAgentUpdateWithURL:completionHandler:)];
+    return shouldUpdateUserAgent;
+}
+
+- (void)updateUserAgent:(NSString *)userAgent completionHandler:(void (^)(void))completionHandler
+{
+    [self internal_updateUserAgent:userAgent completionHandler:completionHandler];
+}
+
+- (void)internal_updateUserAgent:(NSString *)userAgent completionHandler:(void (^)(void))completionHandler
+{
+    NSString *originUserAgent = self.customUserAgent;
+    /// 如果userAgent相较于originUserAgent发生了变化，则使用userAgent覆盖originUserAgent
+    if (userAgent.length > 0 && ![userAgent isEqualToString:originUserAgent]) {
+#if DEBUG
+        NSLog(@"WKWebView UserAgent 旧 %@", originUserAgent);
+        NSLog(@"WKWebView UserAgent 新 %@", userAgent);
+        if ([originUserAgent containsString:userAgent]) {
+            NSLog(@"WKWebView UserAgent 移除 %@", [originUserAgent stringByReplacingOccurrencesOfString:userAgent withString:@""]);
+        } else if ([userAgent containsString:originUserAgent]) {
+            NSLog(@"WKWebView UserAgent 增加 %@", [userAgent stringByReplacingOccurrencesOfString:originUserAgent withString:@""]);
+        } else {
+            NSLog(@"WKWebView UserAgent 改变");
+        }
+#endif
+        /// 1.WKWebView的customUserAgent会覆盖WKWebView本身的UserAgent；
+        /// 2.configuration.applicationNameForUserAgent设置的UserAgent是拼接在WKWebView本身的userAgent后面，
+        /// 但是会覆盖原始UserAgent最后的比如Mobile/15E148
+        self.customUserAgent = userAgent;
+    }
+    if (completionHandler) {
+        completionHandler();
+    }
+}
+
 - (UIScrollView *)scrollView
 {
-    UIScrollView *scrollView = nil;
-    if ([self isUIWebView]) {
-        scrollView = [self uiWebView].scrollView;
-    } else {
-        scrollView = [self wkWebView].scrollView;
-    }
-    return scrollView;
+    return self.webView.scrollView;
 }
 
-- (void)loadRequest:(NSURLRequest *)request
+- (WKNavigation *)loadRequest:(NSURLRequest *)request
 {
-    BOOL shouldUserAgentUpdate = self.delegate && [self.delegate respondsToSelector:@selector(webView:userAgentUpdateWithURL:completionHandler:)];
+    BOOL shouldUserAgentUpdate = [self internal_shouldUpdateWebViewUserAgent];
     if (shouldUserAgentUpdate) {
         __weak typeof(self)wself = self;
-        [self.delegate webView:self userAgentUpdateWithURL:request.URL completionHandler:^(NSString * _Nullable userAgent) {
-            if (userAgent.length > 0) {
-                [wself internal_syncUserAgent:userAgent];
-                //WebView need reset
-                [wself internal_resetWebViewWithURL:request.URL];
-            }
+        [self internal_webViewUserAgentUpdateWithURL:request.URL completionHandler:^{
             [wself internal_loadRequest:request];
         }];
-    } else {
-        [self internal_loadRequest:request];
+        return nil;
     }
+    return [self internal_loadRequest:request];
 }
 
-- (void)internal_loadRequest:(NSURLRequest *)request
+- (WKNavigation *)internal_loadRequest:(NSURLRequest *)request
 {
-    if ([self isUIWebView]) {
-        UIWebView *webView = [self uiWebView];
-        self.originRequest = request;
-        self.currentRequest = request;
-        [webView loadRequest:request];
-    } else {
-        WKWebView *webView = [self wkWebView];
-        self.originRequest = request;
-        self.currentRequest = request;
-        [webView loadRequest:request];
-    }
+    self.originRequest = request;
+    self.currentRequest = request;
+    return [self.webView loadRequest:request];
 }
 
-- (void)loadHTMLString:(NSString *)string baseURL:(nullable NSURL *)baseURL
+- (WKNavigation *)loadHTMLString:(NSString *)string baseURL:(NSURL *)baseURL
 {
-    BOOL shouldUserAgentUpdate = self.delegate && [self.delegate respondsToSelector:@selector(webView:userAgentUpdateWithURL:completionHandler:)];
+    BOOL shouldUserAgentUpdate = [self internal_shouldUpdateWebViewUserAgent];
     if (shouldUserAgentUpdate && baseURL) {
         __weak typeof(self)wself = self;
-        [self.delegate webView:self userAgentUpdateWithURL:baseURL completionHandler:^(NSString * _Nullable userAgent) {
-            if (userAgent.length > 0) {
-                [wself internal_syncUserAgent:userAgent];
-                //WebView need reset
-                [wself internal_resetWebViewWithURL:baseURL];
-            }
+        [self internal_webViewUserAgentUpdateWithURL:baseURL completionHandler:^{
             [wself internal_loadHTMLString:string baseURL:baseURL];
         }];
-        return;
+        return nil;
     }
-    [self internal_loadHTMLString:string baseURL:baseURL];
+    return [self internal_loadHTMLString:string baseURL:baseURL];
 }
 
-- (void)internal_loadHTMLString:(NSString *)string baseURL:(NSURL *)baseURL
+- (WKNavigation *)internal_loadHTMLString:(NSString *)string baseURL:(NSURL *)baseURL
 {
-    if ([self isUIWebView]) {
-        [[self uiWebView] loadHTMLString:string baseURL:baseURL];
-    } else {
-        [[self wkWebView] loadHTMLString:string baseURL:baseURL];
-    }
+    return [self.webView loadHTMLString:string baseURL:baseURL];
 }
 
-- (void)loadData:(NSData *)data MIMEType:(NSString *)MIMEType textEncodingName:(NSString *)textEncodingName baseURL:(NSURL *)baseURL;
+- (WKNavigation *)loadData:(NSData *)data MIMEType:(NSString *)MIMEType characterEncodingName:(NSString *)characterEncodingName baseURL:(NSURL *)baseURL
 {
-    if ([self isUIWebView]) {
-        [[self uiWebView] loadData:data MIMEType:MIMEType textEncodingName:textEncodingName baseURL:baseURL];
-    } else {
-        if (@available(iOS 9.0, *)) {
-            [[self wkWebView] loadData:data MIMEType:MIMEType characterEncodingName:textEncodingName baseURL:baseURL];
-        }
-    }
+    return [self.webView loadData:data MIMEType:MIMEType characterEncodingName:characterEncodingName baseURL:baseURL];
 }
 
-- (void)loadFileURL:(NSURL *)URL allowingReadAccessToURL:(NSURL *)readAccessURL
+- (WKNavigation *)loadFileURL:(NSURL *)URL allowingReadAccessToURL:(NSURL *)readAccessURL
 {
-    if ([self isWKWebView]) {
-        if (@available(iOS 9.0, *)) {
-            [[self wkWebView] loadFileURL:URL allowingReadAccessToURL:readAccessURL];
-        }
-    }
+    return [self.webView loadFileURL:URL allowingReadAccessToURL:readAccessURL];
 }
 
 - (NSString *)title
 {
-    if ([self isUIWebView]) {
-        return [[self uiWebView] stringByEvaluatingJavaScriptFromString:@"document.title"];
-    } else {
-        return [self wkWebView].title;
-    }
+    return self.webView.title;
 }
 
 - (NSURL *)URL
 {
-    if ([self isUIWebView]) {
-        return [self uiWebView].request.URL;
-    } else {
-        return [self wkWebView].URL;
-    }
+    return self.webView.URL;
 }
 
 - (BOOL)canGoBack
 {
-    BOOL canGoBack = NO;
-    if ([self isUIWebView]) {
-        canGoBack = [self uiWebView].canGoBack;
-    } else {
-        canGoBack = [self wkWebView].canGoBack;
-    }
-    return canGoBack;
+    return self.webView.canGoBack;
 }
 
 - (BOOL)canGoForward
 {
-    BOOL canGoForward = NO;
-    if ([self isUIWebView]) {
-        canGoForward = [self uiWebView].canGoForward;
-    } else {
-        canGoForward = [self wkWebView].canGoForward;
-    }
-    return canGoForward;
+    return self.webView.canGoForward;
 }
 
 - (BOOL)isLoading
 {
-    BOOL isLoading = NO;
-    if ([self isUIWebView]) {
-        isLoading = [self uiWebView].isLoading;
-    } else {
-        isLoading = [self wkWebView].isLoading;
-    }
-    return isLoading;
+    return self.webView.isLoading;
 }
 
-- (void)reload
+- (WKNavigation *)reload
 {
-    if ([self isUIWebView]) {
-        [[self uiWebView] reload];
-    } else {
-        [[self wkWebView] reload];
-    }
+    return [self.webView reload];
 }
 
-- (void)reloadFromOrigin
+- (WKNavigation *)reloadFromOrigin
 {
-    if ([self isUIWebView]) {
-        if (self.originRequest) {
-            [self evaluateJavaScript:[NSString stringWithFormat:@"window.location.replace('%@')", self.originRequest.URL.absoluteString] completionHandler:nil];
-        }
-    } else {
-        [[self wkWebView] reloadFromOrigin];
-    }
+    return [self.webView reloadFromOrigin];
 }
 
 - (void)stopLoading
 {
-    if ([self isUIWebView]) {
-        [[self uiWebView] stopLoading];
-    } else {
-        [[self wkWebView] stopLoading];
-    }
+    [self.webView stopLoading];
 }
 
-- (void)goBack
+- (WKNavigation *)goBack
 {
-    if ([self isUIWebView]) {
-        [[self uiWebView] goBack];
-    } else {
-        [[self wkWebView] goBack];
-    }
+    return [self.webView goBack];
 }
 
-- (void)goForward;
+- (WKNavigation *)goForward;
 {
-    if ([self isUIWebView]) {
-        [[self uiWebView] goForward];
-    } else {
-        [[self wkWebView] goForward];
-    }
+    return [self.webView goForward];
 }
 
 - (NSInteger)countOfHistory
 {
-    if ([self isUIWebView]) {
-        int count = [[[self uiWebView] stringByEvaluatingJavaScriptFromString:@"window.history.length"] intValue];
-        if (count) {
-            return count;
-        } else {
-            return 1;
-        }
-    } else {
-        return [self wkWebView].backForwardList.backList.count;
-    }
+    return self.webView.backForwardList.backList.count;
 }
 
-- (void)gobackWithStep:(NSInteger)step
+- (WKNavigation *)goBackWithStep:(NSInteger)step
 {
-    if (self.canGoBack == NO) return;
+    if (self.canGoBack == NO) return nil;
     if (step > 0) {
         NSInteger historyCount = self.countOfHistory;
         if (step >= historyCount) {
             step = historyCount - 1;
         }
-        if ([self isUIWebView]) {
-            [[self uiWebView] stringByEvaluatingJavaScriptFromString:[NSString stringWithFormat:@"window.history.go(-%@)", @(step)]];
-        } else {
-            WKBackForwardListItem *backItem = [self wkWebView].backForwardList.backList[step];
-            [[self wkWebView] goToBackForwardListItem:backItem];
-        }
+        WKBackForwardListItem *backItem = self.webView.backForwardList.backList[step];
+        return [self.webView goToBackForwardListItem:backItem];
     } else {
-        [self goBack];
+        return [self goBack];
     }
 }
 
-- (BOOL)scalesPageToFit
+- (void)setAllowsLinkPreview:(BOOL)allowsLinkPreview
 {
-    return _internal_scalesPageToFit;
+    self.webView.allowsLinkPreview = allowsLinkPreview;
 }
 
-- (void)setScalesPageToFit:(BOOL)scalesPageToFit
+- (BOOL)allowsLinkPreview
 {
-    if ([self isUIWebView]) {
-        [self uiWebView].scalesPageToFit = scalesPageToFit;
-    } else {
-        if (_internal_scalesPageToFit == scalesPageToFit) return;
-        NSString *scaleScript = @"if(document.getElementsByTagName('head')){var hasViewPort = 0;var metas = document.getElementsByTagName('head')[0].getElementsByTagName('meta');for(var i = metas.length; i>=0 ; i--){var meta = metas[i];if(meta && meta.name == 'viewport'){hasViewPort = 1;break;}};if(hasViewPort == 0){var meta = document.createElement('meta');meta.setAttribute('name', 'viewport');meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');document.getElementsByTagName('head')[0].appendChild(meta);}};";
-        WKUserContentController *userContentController = [self wkWebView].configuration.userContentController;
-        NSMutableArray<WKUserScript *> *userScripts = [userContentController.userScripts mutableCopy];
-        WKUserScript *targetUserScript = nil;
-        for (WKUserScript *userScript in userScripts) {
-            if ([userScript.source isEqualToString:scaleScript]) {
-                targetUserScript = userScript;
-                break;
-            }
-        }
-        if (scalesPageToFit) {
-            if (!targetUserScript) {
-                targetUserScript = [[WKUserScript alloc] initWithSource:scaleScript injectionTime:WKUserScriptInjectionTimeAtDocumentEnd forMainFrameOnly:NO];
-                [userContentController addUserScript:targetUserScript];
-            }
-        } else {
-            if (targetUserScript) {
-                [userScripts removeObject:targetUserScript];
-            }
-            [userContentController removeAllUserScripts];
-            for (WKUserScript *aUserScript in userScripts) {
-                [userContentController addUserScript:aUserScript];
-            }
-        }
-    }
-    _internal_scalesPageToFit = scalesPageToFit;
+    return self.webView.allowsLinkPreview;
+}
+
+- (void)setCustomUserAgent:(NSString *)customUserAgent
+{
+    self.webView.customUserAgent = customUserAgent;
+}
+
+- (NSString *)customUserAgent
+{
+    return self.webView.customUserAgent;
 }
 
 - (void)evaluateJavaScript:(NSString *)javaScriptString completionHandler:(void (^)(id _Nullable, NSError * _Nullable))completionHandler
 {
-    if ([self isUIWebView]) {
-        NSString *result = [[self uiWebView] stringByEvaluatingJavaScriptFromString:javaScriptString];
-        if (completionHandler) {
-            completionHandler(result, nil);
-        }
-    } else {
-        [[self wkWebView] evaluateJavaScript:javaScriptString completionHandler:completionHandler];
-    }
-}
-
-- (NSString *)stringByEvaluatingJavaScriptFromString:(NSString *)javaScriptString
-{
-    NSString *result = nil;
-    if ([self isUIWebView]) {
-        result = [[self uiWebView] stringByEvaluatingJavaScriptFromString:javaScriptString];
-    }
-    return result;
+    [self.webView evaluateJavaScript:javaScriptString completionHandler:completionHandler];
 }
 
 - (void)dealloc
 {
-    if ([self isUIWebView]) {
-        UIWebView *webView = [self uiWebView];
-        webView.delegate = nil;
-        [webView loadHTMLString:@"" baseURL:nil];
-        webView.scrollView.delegate = nil;
-        [webView stopLoading];
-        [webView removeFromSuperview];
-    } else {
-        WKWebView *webView = [self wkWebView];
-        webView.UIDelegate = nil;
-        webView.navigationDelegate = nil;
-        [webView removeObserver:self forKeyPath:@"estimatedProgress"];
-        webView.scrollView.delegate = nil;
-        [webView stopLoading];
-        [webView removeFromSuperview];
-    }
+    WKWebView *webView = self.webView;
+    webView.UIDelegate = nil;
+    webView.navigationDelegate = nil;
+    [webView removeObserver:self forKeyPath:@"title"];
+    [webView removeObserver:self forKeyPath:@"estimatedProgress"];
+    webView.scrollView.delegate = nil;
+    [webView stopLoading];
+    [webView removeFromSuperview];
+}
+
+@end
+
+@implementation WKWebView (MAGWebView)
+
++ (WKWebView *)mag_webView
+{
+    MAGWebViewConfiguration *configuration = [[MAGWebViewConfiguration alloc] init];
+    return [self mag_webViewWithConfiguration:configuration];
+}
+
++ (WKWebView *)mag_webViewWithConfiguration:(MAGWebViewConfiguration *)configuration
+{
+    WKWebViewConfiguration *wkConfiguration = configuration.wkConfiguration;
+    WKWebView *webView = [[WKWebView alloc] initWithFrame:CGRectZero configuration:wkConfiguration];
+    webView.opaque = NO;
+    webView.clipsToBounds = NO;
+    webView.backgroundColor = [UIColor clearColor];
+    UIScrollView *scrollView = webView.scrollView;
+    scrollView.clipsToBounds = NO;
+    scrollView.keyboardDismissMode = UIScrollViewKeyboardDismissModeInteractive;
+    scrollView.decelerationRate = UIScrollViewDecelerationRateNormal;
+    scrollView.scrollsToTop = YES;
+    webView.allowsBackForwardNavigationGestures = YES;
+    return webView;
 }
 
 @end
@@ -1085,7 +932,6 @@ MAGWebContext MAGWebViewInitialContext(void)
 + (NSArray<NSHTTPCookie *> *)sharedCookieStorage
 {
     NSMutableArray<NSHTTPCookie *> *mutableCookies = [NSMutableArray array];
-    //获取NSHTTPCookieStorage的cookies
     NSHTTPCookieStorage *sharedCookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
     if (sharedCookieStorage.cookies) {
         [mutableCookies addObjectsFromArray:sharedCookieStorage.cookies];
@@ -1100,7 +946,7 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 + (void)clearCookies:(void (^)(void))completionHandler
 {
-    //must be executed on a main queue
+    /// must be executed on a main queue
     dispatch_safe_async_main_queue(^{
         [self internal_clearCookies:completionHandler];
     });
@@ -1108,30 +954,15 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 + (void)internal_clearCookies:(void (^)(void))completionHandler
 {
-    [NSHTTPCookieStorage clearCookies];
-    if (@available(iOS 9.0, *)) {
-        NSSet *websiteDataTypes = [NSSet setWithObject:WKWebsiteDataTypeCookies];
-        NSDate *dateFrom = [NSDate dateWithTimeIntervalSince1970:0];
-        [[WKWebsiteDataStore defaultDataStore] removeDataOfTypes:websiteDataTypes modifiedSince:dateFrom completionHandler:^{
-            NSLog(@"Cookies清除成功");
-            if (completionHandler) {
-                completionHandler();
-            }
-        }];
-    } else {
-        NSString *libraryDirectory = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
-        NSString *cookiesFolderPath = [libraryDirectory stringByAppendingString:@"/Cookies"];
-        NSError *error = nil;;
-        [[NSFileManager defaultManager] removeItemAtPath:cookiesFolderPath error:&error];
-        if (error) {
-            NSLog(@"Cookies清除成功");
-        } else {
-            NSLog(@"Cookies清除失败");
-        }
+    [NSHTTPCookieStorage mag_clearCookies];
+    NSSet *websiteDataTypes = [NSSet setWithObject:WKWebsiteDataTypeCookies];
+    NSDate *dateFrom = [NSDate dateWithTimeIntervalSince1970:0];
+    [[WKWebsiteDataStore defaultDataStore] removeDataOfTypes:websiteDataTypes modifiedSince:dateFrom completionHandler:^{
+        NSLog(@"Cookies清除成功");
         if (completionHandler) {
             completionHandler();
         }
-    }
+    }];
 }
 
 @end
@@ -1145,7 +976,7 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 + (void)clearCaches:(void (^)(void))completionHandler
 {
-    //must be executed on a main queue
+    /// must be executed on a main queue
     dispatch_safe_async_main_queue(^{
         [self internal_clearCaches:nil];
     });
@@ -1155,29 +986,104 @@ MAGWebContext MAGWebViewInitialContext(void)
 {
     NSURLCache *webCache = [NSURLCache sharedURLCache];
     [webCache removeAllCachedResponses];
-    if (@available(iOS 9.0, *)) {
-        NSSet *websiteDataTypes = [NSSet setWithArray:@[
-                                                        WKWebsiteDataTypeDiskCache,
-                                                        WKWebsiteDataTypeOfflineWebApplicationCache,
-                                                        WKWebsiteDataTypeMemoryCache,
-                                                        WKWebsiteDataTypeLocalStorage,
-                                                        WKWebsiteDataTypeSessionStorage,
-                                                        WKWebsiteDataTypeIndexedDBDatabases,
-                                                        WKWebsiteDataTypeWebSQLDatabases,
-                                                        ]];
-        NSDate *sinceDate = [NSDate dateWithTimeIntervalSince1970:0];
-        [[WKWebsiteDataStore defaultDataStore] removeDataOfTypes:websiteDataTypes modifiedSince:sinceDate completionHandler:^{
-            NSLog(@"WebCache清除成功");
-            if (completionHandler) {
-                completionHandler();
-            }
-        }];
-    } else {
+    NSSet *websiteDataTypes = [NSSet setWithArray:@[
+        WKWebsiteDataTypeDiskCache,
+        WKWebsiteDataTypeOfflineWebApplicationCache,
+        WKWebsiteDataTypeMemoryCache,
+        WKWebsiteDataTypeLocalStorage,
+        WKWebsiteDataTypeSessionStorage,
+        WKWebsiteDataTypeIndexedDBDatabases,
+        WKWebsiteDataTypeWebSQLDatabases,
+    ]];
+    NSDate *sinceDate = [NSDate dateWithTimeIntervalSince1970:0];
+    [[WKWebsiteDataStore defaultDataStore] removeDataOfTypes:websiteDataTypes modifiedSince:sinceDate completionHandler:^{
         NSLog(@"WebCache清除成功");
         if (completionHandler) {
             completionHandler();
         }
+    }];
+}
+
+@end
+
+@implementation WKUserContentController (MAGWebScript)
+
++ (NSString *)mag_webPageScaleFitScript
+{
+    NSString *scaleScript =
+    @"if(document.getElementsByTagName('head')){var hasViewPort = 0;var metas = document.getElementsByTagName('head')[0].getElementsByTagName('meta');for(var i = metas.length; i>=0 ; i--){var meta = metas[i];if(meta && meta.name == 'viewport'){hasViewPort = 1;break;}};if(hasViewPort == 0){var meta = document.createElement('meta');meta.setAttribute('name', 'viewport');meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');document.getElementsByTagName('head')[0].appendChild(meta);}};";
+    return scaleScript;
+}
+
+- (void)mag_addScriptAtDocumentStart:(NSString *)script
+{
+    [self mag_addScript:script injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:NO];
+}
+
+- (void)mag_addScriptForMainFrameDocumentStart:(NSString *)script
+{
+    [self mag_addScript:script injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:YES];
+}
+
+- (void)mag_addScriptAtDocumentEnd:(NSString *)script
+{
+    [self mag_addScript:script injectionTime:WKUserScriptInjectionTimeAtDocumentEnd forMainFrameOnly:NO];
+}
+
+- (void)mag_addScriptForMainFrameAtDocumentEnd:(NSString *)script
+{
+    [self mag_addScript:script injectionTime:WKUserScriptInjectionTimeAtDocumentEnd forMainFrameOnly:YES];
+}
+
+- (void)mag_addScript:(NSString *)script injectionTime:(WKUserScriptInjectionTime)injectionTime forMainFrameOnly:(BOOL)forMainFrameOnly
+{
+    if (script.length == 0) return;
+    NSMutableArray<WKUserScript *> *userScripts = [self.userScripts mutableCopy];
+    WKUserScript *targetUserScript = nil;
+    for (WKUserScript *userScript in userScripts) {
+        if ([userScript.source isEqualToString:script]) {
+            targetUserScript = userScript;
+            break;
+        }
     }
+    if (!targetUserScript) {
+        targetUserScript = [[WKUserScript alloc] initWithSource:script injectionTime:injectionTime forMainFrameOnly:forMainFrameOnly];
+        [self addUserScript:targetUserScript];
+    }
+}
+
+- (void)mag_removeScript:(NSString *)script
+{
+    if (script.length == 0) return;
+    NSMutableArray<WKUserScript *> *userScripts = [self.userScripts mutableCopy];
+    WKUserScript *targetUserScript = nil;
+    for (WKUserScript *userScript in userScripts) {
+        if ([userScript.source isEqualToString:script]) {
+            targetUserScript = userScript;
+            break;
+        }
+    }
+    if (targetUserScript) {
+        [userScripts removeObject:targetUserScript];
+    }
+    [self removeAllUserScripts];
+    for (WKUserScript *aUserScript in userScripts) {
+        [self addUserScript:aUserScript];
+    }
+}
+
+@end
+
+@implementation WKProcessPool (MAGWebView)
+
++ (WKProcessPool *)mag_processPool
+{
+    static WKProcessPool *mag_processPool = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        mag_processPool = [[WKProcessPool alloc] init];
+    });
+    return mag_processPool;
 }
 
 @end
@@ -1201,10 +1107,16 @@ MAGWebContext MAGWebViewInitialContext(void)
 
 @implementation NSHTTPCookieStorage (MAGWebCookie)
 
-+ (void)clearCookies
++ (void)mag_clearCookies
 {
     NSHTTPCookieStorage *sharedCookieStorage = [NSHTTPCookieStorage sharedHTTPCookieStorage];
     [sharedCookieStorage removeCookiesSinceDate:[NSDate dateWithTimeIntervalSince1970:0]];
+    if (sharedCookieStorage.cookies) {
+        NSArray<NSHTTPCookie *> *cookies = [NSArray arrayWithArray:sharedCookieStorage.cookies];
+        for (NSHTTPCookie *cookie in cookies) {
+            [sharedCookieStorage deleteCookie:cookie];
+        }
+    }
 }
 
 @end
