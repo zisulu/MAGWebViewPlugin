@@ -10,13 +10,13 @@
 #import "MAGWebView.h"
 #import <Masonry/Masonry.h>
 #import <MJRefresh/MJRefresh.h>
-#import <WebViewJavascriptBridge/WebViewJavascriptBridge.h>
+#import "JSNativeService.h"
 
 @interface MAGWebClientViewController ()<MAGWebViewDelegate>
 
 @property (nonatomic, strong) MAGWebView *webView;
 
-@property (nonatomic, strong) WebViewJavascriptBridge *jsBridge;
+@property (nonatomic, strong) JSNativeService *jsService;
 
 @end
 
@@ -27,15 +27,9 @@
     // Do any additional setup after loading the view from its nib.
     MAGWebViewConfiguration *configuration = [[MAGWebViewConfiguration alloc] init];
     configuration.allowsUserActionForMediaPlayback = NO;
-    [configuration addCustomExternalSchemes:@[@"wvjbscheme"]];
-    NSString *testBundlePath = [[NSBundle mainBundle] pathForResource:@"magjs_test" ofType:@"bundle"];
-    NSBundle *testBundle = [NSBundle bundleWithPath:testBundlePath];
-    NSString *jsPath = [testBundle pathForResource:@"magjs_new" ofType:@"js"];
-    NSString *injectedScript = [[NSString alloc] initWithContentsOfFile:jsPath encoding:NSUTF8StringEncoding error:nil];
-    WKUserContentController *userContentController = configuration.wkConfiguration.userContentController;
-    [userContentController mag_addScriptAtDocumentStart:injectedScript];
+    [configuration addCustomWhiteSchemes:@[@"wvjbscheme"]];
     MAGWebView *webView = [[MAGWebView alloc] initWithConfiguration:configuration];
-    webView.scrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+    webView.delegate = self;
     [self.view addSubview:webView];
     [webView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.edges.equalTo(self.view);
@@ -46,11 +40,13 @@
      NSURLRequest *request = [NSURLRequest requestWithURL:requestURL];
      [self.webView loadRequest:request];
      */
-    NSURL *htmlURL = [testBundle URLForResource:@"Magjs Demo" withExtension:@"htm"];
+    NSString *testBundlePath = [[NSBundle mainBundle] pathForResource:@"MWDEMO" ofType:@"bundle"];
+    NSBundle *testBundle = [NSBundle bundleWithPath:testBundlePath];
+    NSURL *htmlURL = [testBundle URLForResource:@"MWDEMO" withExtension:@"htm"];
     [self.webView loadFileURL:htmlURL allowingReadAccessToURL:testBundle.bundleURL];
-    //注册jsBridge
+    /// 注册jsBridge
     [self registerJavascriptBridge];
-    //添加刷新
+    /// 添加刷新
     [self addRefreshComponent];
 }
 
@@ -64,24 +60,38 @@
 
 - (void)registerJavascriptBridge
 {
-    [WebViewJavascriptBridge enableLogging];
-    WebViewJavascriptBridge *jsBridge = [WebViewJavascriptBridge bridge:self.webView.webView];
-    [jsBridge setWebViewDelegate:self.webView];
-    self.jsBridge = jsBridge;
+    self.jsService = [JSNativeService doJSRegistry:self.webView.webView context:self];
 }
 
-- (BOOL)webView:(id<MAGWebView>)webView shouldStartLoadWithRequest:(nonnull NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType
+- (void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    [self.jsService pageAppear];
+}
+
+- (void)viewDidDisappear:(BOOL)animated
+{
+    [super viewDidDisappear:animated];
+    [self.jsService pageDisappear];
+}
+
+- (void)dealloc
+{
+    [self.jsService pageDestroy];
+}
+
+- (BOOL)webView:(id<MAGWebView>)webView shouldAllowWithRequest:(nonnull NSURLRequest *)request navigationType:(WKNavigationType)navigationType
 {
     NSLog(@"shouldStartLoadWithRequest");
     return YES;
 }
 
-- (void)webViewDidStartLoad:(id<MAGWebView>)webView
+- (void)webViewDidLoadStarted:(id<MAGWebView>)webView
 {
     NSLog(@"webViewDidStartLoad");
 }
 
-- (void)webViewDidFinishLoad:(id<MAGWebView>)webView
+- (void)webViewDidLoadFinished:(id<MAGWebView>)webView
 {
     [webView.scrollView.mj_header endRefreshing];
     NSLog(@"webViewDidFinishLoad");
@@ -93,7 +103,7 @@
     NSLog(@"longPressGestureRecognized");
 }
 
-- (void)webView:(id<MAGWebView>)webView didFailLoadWithError:(nonnull NSError *)error
+- (void)webView:(id<MAGWebView>)webView didLoadFailedWithError:(nonnull NSError *)error
 {
     [webView.scrollView.mj_header endRefreshing];
     NSLog(@"didFailLoadWithError:%@", error);
@@ -107,7 +117,7 @@
 
 - (void)webView:(id<MAGWebView>)webView showAlertWithMessage:(nonnull NSString *)message completionHandler:(nonnull void (^)(void))completionHandler
 {
-    //Use UIAlertController or Custom alert View
+    /// Use UIAlertController or Custom alert View
     UIAlertController * alertController = [UIAlertController alertControllerWithTitle:@"提示" message:message preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction * cancelAction = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
         completionHandler();
@@ -118,7 +128,7 @@
 
 - (void)webView:(id<MAGWebView>)webView showConfirmAlertWithMessage:(nonnull NSString *)message completionHandler:(nonnull void (^)(BOOL))completionHandler
 {
-    //Use UIAlertController or Custom alert View
+    /// Use UIAlertController or Custom alert View
     UIAlertController * alertController = [UIAlertController alertControllerWithTitle:@"提示" message:message preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction * cancelAction = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
         completionHandler(NO);
@@ -133,7 +143,7 @@
 
 - (void)webView:(id<MAGWebView>)webView showTextInputAlertWithMessage:(nonnull NSString *)message placeholder:(nonnull NSString *)placeholder completionHandler:(nonnull void (^)(NSString * _Nonnull))completionHandler
 {
-    //Use UIAlertController or Custom alert View
+    /// Use UIAlertController or Custom alert View
     UIAlertController * alertController = [UIAlertController alertControllerWithTitle:@"提示" message:message preferredStyle:UIAlertControllerStyleAlert];
     [alertController addTextFieldWithConfigurationHandler:^(UITextField *textField){
         textField.placeholder = placeholder;

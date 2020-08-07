@@ -1,6 +1,6 @@
 //
 //  MAGWebView.h
-//  MAGWebViewPlugin
+//  MAGWebView
 //
 //  Created by appl on 2019/5/5.
 //  Copyright © 2019 lyeah. All rights reserved.
@@ -90,7 +90,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  An array contains white schemes that does not internally intercept.
- Default contain @"http", @"https"
+ Default contain @"http", @"https"，@"file"
  customExternalHttpHosts > customWhiteSchemes > customExternalSchemes
  */
 @property (nonatomic, copy, readonly) NSArray<NSString *> *customWhiteSchemes;

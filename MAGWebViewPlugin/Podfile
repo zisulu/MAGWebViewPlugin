@@ -2,10 +2,12 @@
 platform :ios, '8.0'
 inhibit_all_warnings!
 
+#source 'https://cdn.cocoapods.org/'
+
 target 'MAGWebViewPlugin' do
 
   pod 'Masonry', '1.1.0'
-  pod 'MJRefresh', '3.1.16'
-  pod 'WebViewJavascriptBridge', '~> 6.0'
+  pod 'MJRefresh', '~> 3.4'
+  pod 'WebViewJavascriptBridge', git:'https://github.com/lyeah-ios/WebViewJavascriptBridge.git'
   
 end

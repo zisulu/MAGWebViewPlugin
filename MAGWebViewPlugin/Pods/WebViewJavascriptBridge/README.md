@@ -3,12 +3,13 @@ WebViewJavascriptBridge
 
 [![Circle CI](https://img.shields.io/circleci/project/github/marcuswestin/WebViewJavascriptBridge.svg)](https://circleci.com/gh/marcuswestin/WebViewJavascriptBridge)
 
-An iOS/OSX bridge for sending messages between Obj-C and JavaScript in WKWebViews, UIWebViews & WebViews.
+An iOS/OSX bridge for sending messages between Obj-C and JavaScript in WKWebViews & WebViews.
 
 Migration Guide
 ---------------
 
-When upgrading from v5.0.x to 6.0.x you will have to update the `setupWebViewJavascriptBridge` javascript snippet. See https://github.com/marcuswestin/WebViewJavascriptBridge#usage part 4).
+-- When upgrading from v5.0.x to 6.0.x you will have to update the `setupWebViewJavascriptBridge` javascript snippet. See https://github.com/marcuswestin/WebViewJavascriptBridge#usage part 4).
+-- When upgrading to 7.0.x you should support WKWebViews  only in your projects.
 
 Who uses WebViewJavascriptBridge?
 ---------------------------------
@@ -37,7 +38,7 @@ Installation (iOS & OSX)
 Add this to your [podfile](https://guides.cocoapods.org/using/getting-started.html) and run `pod install` to install:
 
 ```ruby
-pod 'WebViewJavascriptBridge'
+pod 'WebViewJavascriptBridge', '~> 7.0'
 ```
 
 ### Manual installation
@@ -68,7 +69,7 @@ Usage
 @property WebViewJavascriptBridge* bridge;
 ```
 
-2) Instantiate WebViewJavascriptBridge with a WKWebView, UIWebView (iOS) or WebView (OSX):
+2) Instantiate WebViewJavascriptBridge with a WKWebView (iOS) or WebView (OSX):
 
 ```objc
 self.bridge = [WebViewJavascriptBridge bridgeForWebView:webView];
@@ -142,7 +143,7 @@ API Reference
 
 ### ObjC API
 
-##### `[WebViewJavascriptBridge bridgeForWebView:(WKWebVIew/UIWebView/WebView*)webview`
+##### `[WebViewJavascriptBridge bridgeForWebView:(WKWebVIew *)webview`
 
 Create a javascript bridge for the given web view.
 
@@ -178,13 +179,13 @@ Example:
 ```objc
 [self.bridge callHandler:@"showAlert" data:@"Hi from ObjC to JS!"];
 [self.bridge callHandler:@"getCurrentPageUrl" data:nil responseCallback:^(id responseData) {
-	NSLog(@"Current UIWebView page URL is: %@", responseData);
+	NSLog(@"Current WKWebView page URL is: %@", responseData);
 }];
 ```
 
 #### `[bridge setWebViewDelegate:(id)webViewDelegate]`
 
-Optionally, set a `WKNavigationDelegate/UIWebViewDelegate` if you need to respond to the [web view's lifecycle events](https://developer.apple.com/reference/uikit/uiwebviewdelegate).
+Optionally, set a `WKNavigationDelegate` if you need to respond to the [web view's lifecycle events](https://developer.apple.com/reference/Webkit/WKNavigationDelegate).
 
 ##### `[bridge disableJavscriptAlertBoxSafetyTimeout]`
 

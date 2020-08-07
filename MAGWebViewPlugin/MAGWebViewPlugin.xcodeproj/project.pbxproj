@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 51;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -18,8 +18,12 @@
 		583BBB02227E8E6C005D1199 /* TestViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 583BBB01227E8E6C005D1199 /* TestViewController.m */; };
 		583BBB05227E8EE0005D1199 /* MAGWebView.m in Sources */ = {isa = PBXBuildFile; fileRef = 583BBB04227E8EE0005D1199 /* MAGWebView.m */; };
 		583BBB07227EC0F3005D1199 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 583BBB06227EC0F3005D1199 /* WebKit.framework */; };
+		5852EE9424DD2C8800391784 /* JSNativeInterface.plist in Resources */ = {isa = PBXBuildFile; fileRef = 5852EE9224DD2C8800391784 /* JSNativeInterface.plist */; };
+		5852EE9524DD2C8800391784 /* JSNativeService.m in Sources */ = {isa = PBXBuildFile; fileRef = 5852EE9324DD2C8800391784 /* JSNativeService.m */; };
+		5852EE9724DD391300391784 /* mwjs-2.0.0.js in Resources */ = {isa = PBXBuildFile; fileRef = 5852EE9624DD391300391784 /* mwjs-2.0.0.js */; };
+		5852EE9924DD563100391784 /* mwjs-pure.js in Resources */ = {isa = PBXBuildFile; fileRef = 5852EE9824DD563100391784 /* mwjs-pure.js */; };
 		770CCF5970354D9DE527572D /* libPods-MAGWebViewPlugin.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0E84B1B2147D8768B6EDEC3C /* libPods-MAGWebViewPlugin.a */; };
-		F8077D2D24D6DE4A00983ACC /* magjs_test.bundle in Resources */ = {isa = PBXBuildFile; fileRef = F8077D2C24D6DE4A00983ACC /* magjs_test.bundle */; };
+		F8077D2D24D6DE4A00983ACC /* MWDEMO.bundle in Resources */ = {isa = PBXBuildFile; fileRef = F8077D2C24D6DE4A00983ACC /* MWDEMO.bundle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -63,9 +67,14 @@
 		583BBB03227E8EE0005D1199 /* MAGWebView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MAGWebView.h; sourceTree = "<group>"; };
 		583BBB04227E8EE0005D1199 /* MAGWebView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MAGWebView.m; sourceTree = "<group>"; };
 		583BBB06227EC0F3005D1199 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
+		5852EE9124DD2C8800391784 /* JSNativeService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSNativeService.h; sourceTree = "<group>"; };
+		5852EE9224DD2C8800391784 /* JSNativeInterface.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = JSNativeInterface.plist; sourceTree = "<group>"; };
+		5852EE9324DD2C8800391784 /* JSNativeService.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JSNativeService.m; sourceTree = "<group>"; };
+		5852EE9624DD391300391784 /* mwjs-2.0.0.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "mwjs-2.0.0.js"; sourceTree = "<group>"; };
+		5852EE9824DD563100391784 /* mwjs-pure.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = "mwjs-pure.js"; sourceTree = "<group>"; };
 		921B4135B9AA8E590B8737C2 /* Pods-MAGWebViewPlugin.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MAGWebViewPlugin.debug.xcconfig"; path = "Target Support Files/Pods-MAGWebViewPlugin/Pods-MAGWebViewPlugin.debug.xcconfig"; sourceTree = "<group>"; };
 		ABC30753AEFE993406204E47 /* Pods-MAGWebViewPlugin.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MAGWebViewPlugin.release.xcconfig"; path = "Target Support Files/Pods-MAGWebViewPlugin/Pods-MAGWebViewPlugin.release.xcconfig"; sourceTree = "<group>"; };
-		F8077D2C24D6DE4A00983ACC /* magjs_test.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = magjs_test.bundle; sourceTree = "<group>"; };
+		F8077D2C24D6DE4A00983ACC /* MWDEMO.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = MWDEMO.bundle; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -194,7 +203,12 @@
 		F8077D1924D6DA2000983ACC /* Resource */ = {
 			isa = PBXGroup;
 			children = (
-				F8077D2C24D6DE4A00983ACC /* magjs_test.bundle */,
+				5852EE9224DD2C8800391784 /* JSNativeInterface.plist */,
+				5852EE9124DD2C8800391784 /* JSNativeService.h */,
+				5852EE9324DD2C8800391784 /* JSNativeService.m */,
+				5852EE9824DD563100391784 /* mwjs-pure.js */,
+				5852EE9624DD391300391784 /* mwjs-2.0.0.js */,
+				F8077D2C24D6DE4A00983ACC /* MWDEMO.bundle */,
 			);
 			path = Resource;
 			sourceTree = "<group>";
@@ -304,8 +318,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F8077D2D24D6DE4A00983ACC /* magjs_test.bundle in Resources */,
+				F8077D2D24D6DE4A00983ACC /* MWDEMO.bundle in Resources */,
+				5852EE9924DD563100391784 /* mwjs-pure.js in Resources */,
 				583BBAD4227E8C01005D1199 /* LaunchScreen.storyboard in Resources */,
+				5852EE9724DD391300391784 /* mwjs-2.0.0.js in Resources */,
+				5852EE9424DD2C8800391784 /* JSNativeInterface.plist in Resources */,
 				583BBAD1227E8C01005D1199 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -333,16 +350,11 @@
 			files = (
 			);
 			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-MAGWebViewPlugin/Pods-MAGWebViewPlugin-resources.sh",
-				"${PODS_ROOT}/MJRefresh/MJRefresh/MJRefresh.bundle",
+				"${PODS_ROOT}/Target Support Files/Pods-MAGWebViewPlugin/Pods-MAGWebViewPlugin-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
-			);
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/MJRefresh.bundle",
+				"${PODS_ROOT}/Target Support Files/Pods-MAGWebViewPlugin/Pods-MAGWebViewPlugin-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -379,6 +391,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				583BBAFC227E8DC6005D1199 /* MAGWebClientViewController.m in Sources */,
+				5852EE9524DD2C8800391784 /* JSNativeService.m in Sources */,
 				583BBB05227E8EE0005D1199 /* MAGWebView.m in Sources */,
 				583BBACC227E8BFF005D1199 /* ViewController.m in Sources */,
 				583BBAD7227E8C01005D1199 /* main.m in Sources */,

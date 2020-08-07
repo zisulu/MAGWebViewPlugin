@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>version</key>
+	<string>1.0.0</string>
+	<key>readme</key>
+	<string>name为js调用函数名称，handlerName为native函数名称</string>
+	<key>list</key>
+	<array>
+		<dict>
+			<key>name</key>
+			<string>dialog</string>
+			<key>handlerName</key>
+			<string>showDialog:</string>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>getDeviceId</string>
+			<key>handlerName</key>
+			<string>getDeviceId</string>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>setData</string>
+			<key>handlerName</key>
+			<string>setData:</string>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>showPhoneSettings</string>
+			<key>handlerName</key>
+			<string>showPhoneSettings</string>
+		</dict>
+	</array>
+</dict>
+</plist>
