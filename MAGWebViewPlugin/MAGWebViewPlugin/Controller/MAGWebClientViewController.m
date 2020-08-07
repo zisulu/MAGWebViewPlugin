@@ -27,23 +27,27 @@
     // Do any additional setup after loading the view from its nib.
     MAGWebViewConfiguration *configuration = [[MAGWebViewConfiguration alloc] init];
     configuration.allowsUserActionForMediaPlayback = NO;
-    /**
-    NSMutableArray<NSString *> *customWhiteSchemes = [configuration.customWhiteSchemes mutableCopy];
-    NSArray *supportedProtocols = @[
-                                    @"CustomScheme",
-                                    ];
-    [customWhiteSchemes addObjectsFromArray:supportedProtocols];
-    configuration.customWhiteSchemes = [customWhiteSchemes copy];
-     */
+    [configuration addCustomExternalSchemes:@[@"wvjbscheme"]];
+    NSString *testBundlePath = [[NSBundle mainBundle] pathForResource:@"magjs_test" ofType:@"bundle"];
+    NSBundle *testBundle = [NSBundle bundleWithPath:testBundlePath];
+    NSString *jsPath = [testBundle pathForResource:@"magjs_new" ofType:@"js"];
+    NSString *injectedScript = [[NSString alloc] initWithContentsOfFile:jsPath encoding:NSUTF8StringEncoding error:nil];
+    WKUserContentController *userContentController = configuration.wkConfiguration.userContentController;
+    [userContentController mag_addScriptAtDocumentStart:injectedScript];
     MAGWebView *webView = [[MAGWebView alloc] initWithConfiguration:configuration];
+    webView.scrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
     [self.view addSubview:webView];
     [webView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.edges.equalTo(self.view);
     }];
     self.webView = webView;
-    NSURL *requestURL = [NSURL URLWithString:@"https://www.baidu.com"];
-    NSURLRequest *request = [NSURLRequest requestWithURL:requestURL];
-    [self.webView loadRequest:request];
+    /**
+     NSURL *requestURL = [NSURL URLWithString:@"https://www.baidu.com"];
+     NSURLRequest *request = [NSURLRequest requestWithURL:requestURL];
+     [self.webView loadRequest:request];
+     */
+    NSURL *htmlURL = [testBundle URLForResource:@"Magjs Demo" withExtension:@"htm"];
+    [self.webView loadFileURL:htmlURL allowingReadAccessToURL:testBundle.bundleURL];
     //注册jsBridge
     [self registerJavascriptBridge];
     //添加刷新
