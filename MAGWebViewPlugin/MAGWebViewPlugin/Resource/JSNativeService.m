@@ -10,7 +10,7 @@
 #import "MAGWebView.h"
 #import <WebViewJavascriptBridge/WebViewJavascriptBridge.h>
 
-static BOOL useWebViewJavascriptBridge = NO;
+static BOOL useWebViewJavascriptBridge = YES;
 
 @interface JSNativeService ()
 
@@ -218,6 +218,13 @@ static BOOL useWebViewJavascriptBridge = NO;
 {
     NSString *deviceId = @"没错这个就是设备号";
     [self callHandler:@"getDeviceId" data:deviceId];
+}
+
+- (void)addRefreshComponent
+{
+    if ([self.context respondsToSelector:@selector(addRefreshComponent)]) {
+        [self.context performSelector:@selector(addRefreshComponent)];
+    }
 }
 
 @end

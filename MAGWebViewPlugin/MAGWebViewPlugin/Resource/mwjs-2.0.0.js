@@ -135,6 +135,15 @@
              bridge.callHandler('getDeviceId', '', function(rs){});
          });
          window.webkit.messageHandlers.getDeviceId.postMessage('');
+     },
+     addRefreshComponent: function (){
+         if (window.MagAndroidClient) {
+             window.MagAndroidClient.addRefreshComponent();
+         }
+         iosConnect(function(bridge){
+             bridge.callHandler('addRefreshComponent', '', function(rs){});
+         });
+         window.webkit.messageHandlers.addRefreshComponent.postMessage('');
      }
      };
      window.mag = mag;

@@ -35,26 +35,22 @@
         make.edges.equalTo(self.view);
     }];
     self.webView = webView;
-    /**
-     NSURL *requestURL = [NSURL URLWithString:@"https://www.baidu.com"];
-     NSURLRequest *request = [NSURLRequest requestWithURL:requestURL];
-     [self.webView loadRequest:request];
-     */
+//    NSURL *requestURL = [NSURL URLWithString:@"https://www.baidu.com"];
+//    NSURLRequest *request = [NSURLRequest requestWithURL:requestURL];
+//    [self.webView loadRequest:request];
     NSString *testBundlePath = [[NSBundle mainBundle] pathForResource:@"MWDEMO" ofType:@"bundle"];
     NSBundle *testBundle = [NSBundle bundleWithPath:testBundlePath];
     NSURL *htmlURL = [testBundle URLForResource:@"MWDEMO" withExtension:@"htm"];
     [self.webView loadFileURL:htmlURL allowingReadAccessToURL:testBundle.bundleURL];
     /// 注册jsBridge
     [self registerJavascriptBridge];
-    /// 添加刷新
-    [self addRefreshComponent];
 }
 
 - (void)addRefreshComponent
 {
     __weak typeof(self)wself = self;
     self.webView.scrollView.mj_header = [MJRefreshNormalHeader headerWithRefreshingBlock:^{
-        [wself.webView reload];
+        [wself.webView reloadFromOrigin];
     }];
 }
 
@@ -80,7 +76,7 @@
     [self.jsService pageDestroy];
 }
 
-- (BOOL)webView:(id<MAGWebView>)webView shouldAllowWithRequest:(nonnull NSURLRequest *)request navigationType:(WKNavigationType)navigationType
+- (BOOL)webView:(id<MAGWebView>)webView shouldAllowWithRequest:(NSURLRequest *)request navigationType:(WKNavigationType)navigationType
 {
     NSLog(@"shouldStartLoadWithRequest");
     return YES;

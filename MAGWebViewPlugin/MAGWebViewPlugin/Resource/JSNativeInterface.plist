@@ -32,6 +32,12 @@
 			<key>handlerName</key>
 			<string>showPhoneSettings</string>
 		</dict>
+		<dict>
+			<key>name</key>
+			<string>addRefreshComponent</string>
+			<key>handlerName</key>
+			<string>addRefreshComponent</string>
+		</dict>
 	</array>
 </dict>
 </plist>

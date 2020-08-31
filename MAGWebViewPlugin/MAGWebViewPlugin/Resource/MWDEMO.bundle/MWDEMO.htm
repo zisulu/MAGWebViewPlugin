@@ -7,16 +7,26 @@
             <link rel="stylesheet" href="./MWDEMO/mwdemo.css">
                 <script src="./MWDEMO/jquery-1.8.0.min.js"></script>
 <!--                <script src="./MWDEMO/mwjs.js"></script>-->
-                <!--                <script>-->
-                <!--                    mag.setPageLife({-->
-                <!--                        pageAppear: function(){-->
-                <!--                            alert("页面出现了");-->
-                <!--                        },-->
-                <!--                        pageDisappear: function(){-->
-                <!--                            -->
-                <!--                        }-->
-                <!--                    });-->
-                <!--                </script>-->
+                <script src="http://app.lxh.magcloud.cc/public/static/dest/js/libs/magjs-x.js"></script>
+                <script>
+                    $(function(){
+                        mag.ready(function(){
+                            alert("js准备好了");
+                            mag.addRefreshComponent();
+                        });
+                    });
+                </script>
+                <script type="text/javascript" charset="UTF-8" src="/templates/mobile_103/js/index.min.js"></script>
+                <script>
+                    mag.setPageLife({
+                        pageAppear: function(){
+                            alert("页面出现了");
+                        },
+                        pageDisappear: function(){
+                            
+                        }
+                    });
+                </script>
                 <style type="text/css">.theme-font-color{color:#42BD56;}.theme-bg-color{ background-color:#42BD56;}.theme-border-color{ border-color:#42BD56;}</style>
 </head>
 <body>
@@ -45,7 +55,7 @@
         </script>
     </div>
     
-    <div class="api-item" id="refresh">
+    <div class="api-item" id="settings">
         <p class="title">打开手机设置</p>
         <button class="magx-btn" id="settingButton">打开手机设置</button>
         <script>
@@ -71,5 +81,16 @@
         </script>
     </div>
     
+    <div class="api-item" id="refresh">
+        <p class="title">打开手机设置</p>
+        <button class="magx-btn" id="refreshButton">添加下拉刷新</button>
+        <script>
+            $(function(){
+                $("#refreshButton").click(function () {
+                    mag.addRefreshComponent();
+                });
+            });
+        </script>
+    </div>
     
 </body></html>
