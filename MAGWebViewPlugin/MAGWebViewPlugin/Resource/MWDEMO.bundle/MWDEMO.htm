@@ -6,26 +6,26 @@
         <meta name="format-detection" content="telephone=no">
             <link rel="stylesheet" href="./MWDEMO/mwdemo.css">
                 <script src="./MWDEMO/jquery-1.8.0.min.js"></script>
-<!--                <script src="./MWDEMO/mwjs.js"></script>-->
-                <script src="http://app.lxh.magcloud.cc/public/static/dest/js/libs/magjs-x.js"></script>
+                <script src="./MWDEMO/mwjs.js"></script>
+<!--                <script src="http://app.lxh.magcloud.cc/public/static/dest/js/libs/magjs-x.js"></script>-->
                 <script>
                     $(function(){
-                        mag.ready(function(){
-                            alert("js准备好了");
-                            mag.addRefreshComponent();
-                        });
+<!--                        mag.ready(function(){-->
+<!--                            alert("js准备好了");-->
+<!--                            mag.addRefreshComponent();-->
+<!--                        });-->
                     });
                 </script>
                 <script type="text/javascript" charset="UTF-8" src="/templates/mobile_103/js/index.min.js"></script>
                 <script>
-                    mag.setPageLife({
-                        pageAppear: function(){
-                            alert("页面出现了");
-                        },
-                        pageDisappear: function(){
-                            
-                        }
-                    });
+<!--                    mag.setPageLife({-->
+<!--                        pageAppear: function(){-->
+<!--                            alert("页面出现了");-->
+<!--                        },-->
+<!--                        pageDisappear: function(){-->
+<!--                            -->
+<!--                        }-->
+<!--                    });-->
                 </script>
                 <style type="text/css">.theme-font-color{color:#42BD56;}.theme-bg-color{ background-color:#42BD56;}.theme-border-color{ border-color:#42BD56;}</style>
 </head>
@@ -87,7 +87,30 @@
         <script>
             $(function(){
                 $("#refreshButton").click(function () {
-                    mag.addRefreshComponent();
+                    mag.addRefreshComponent("saddsdadsa");
+                });
+            });
+        </script>
+    </div>
+    <div class="api-item" id="refresh">
+        <p class="title">测试导航栏js</p>
+        <button class="magx-btn" id="setNavigationBarStyleButton">测试导航栏js</button>
+        <script>
+            $(function(){
+                $("#setNavigationBarStyleButton").click(function () {
+                    mag.setNavigationBarStyle(
+                                              JSON.stringify({
+                        title:"你好",
+                        content:"这是原生控件",
+                        buttons:["取消", "确定"],
+                        success:function () {
+                            alert("你点击了 确定 ");
+                        },
+                        cancel:function () {
+                            alert("你点击了 取消");
+                        }
+                    })
+                                              );
                 });
             });
         </script>

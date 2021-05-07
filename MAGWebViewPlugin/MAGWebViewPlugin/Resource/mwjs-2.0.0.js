@@ -144,6 +144,17 @@
              bridge.callHandler('addRefreshComponent', '', function(rs){});
          });
          window.webkit.messageHandlers.addRefreshComponent.postMessage('');
+     },
+     setNavigationBarStyle:function (config) {
+         var configStr = JSON.stringify(config);
+         if (window.MagAndroidClient) {
+             window.MagAndroidClient.dialog(configStr);
+         }
+         iosConnect(function (bridge) {
+             bridge.callHandler('setNavigationBarStyle', configStr, function (rs) {
+             });
+         });
+         window.webkit.messageHandlers.setNavigationBarStyle.postMessage(configStr);
      }
      };
      window.mag = mag;

@@ -207,7 +207,6 @@ dispatch_async(dispatch_get_main_queue(), block);\
     return @[
         @"http",
         @"https",
-        @"file",
     ];
 }
 
@@ -474,24 +473,24 @@ dispatch_async(dispatch_get_main_queue(), block);\
                 NSArray<NSString *> *supportedHosts = [self.configuration customExternalHttpHosts];
                 result = [supportedHosts containsObject:requestHost];
             } else {
-                /// we also don't want some schemes to be intercepted.
-                NSArray *whiteSchemes = [self.configuration customWhiteSchemes];
-                if (whiteSchemes.count > 0 && [whiteSchemes containsObject:requestScheme]) {
-                    /// don't intercept
-                    result = NO;
+                /// tel, sms, mailto etc.
+                result = [self internal_canOpenExternalURL:requestURL];
+                if (result) {
+                    //we also don't want some schemes to be intercepted.
+                    NSArray *whiteSchemes = [self.configuration customWhiteSchemes];
+                    if (whiteSchemes.count > 0 && [whiteSchemes containsObject:requestScheme]) {
+                        /// don't intercept
+                        result = NO;
+                    }
                 } else {
-                    /// tel, sms, mailto etc.
-                    result = [self internal_canOpenExternalURL:requestURL];
-                    if (!result) {
-                        /// system canOpenURL failed, it means requestURL contains other untrusted URLScheme
-                        NSString *validRequestPrefix = [NSString stringWithFormat:@"%@://", requestScheme];
-                        if ([requestURL.absoluteString hasPrefix:validRequestPrefix]) {
-                            /// let user choose open URLScheme wether or not if URLScheme not be contained in customExternalSchemes
-                            result = YES;
-                        } else {
-                            /// don't intercepts about:blank、data:xxxx
-                            result = NO;
-                        }
+                    /// system canOpenURL failed, it means requestURL contains other untrusted URLScheme
+                    NSString *validRequestPrefix = [NSString stringWithFormat:@"%@://", requestScheme];
+                    if ([requestURL.absoluteString hasPrefix:validRequestPrefix]) {
+                        /// let user choose open URLScheme wether or not if URLScheme not be contained in customExternalSchemes
+                        result = YES;
+                    } else {
+                        /// don't intercepts about:blank、data:xxxx
+                        result = NO;
                     }
                 }
             }

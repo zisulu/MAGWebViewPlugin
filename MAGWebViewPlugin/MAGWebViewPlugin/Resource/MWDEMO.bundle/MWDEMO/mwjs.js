@@ -50,6 +50,27 @@
         });
     });
     
+    function MAGJSONStringify(str) {
+        var isJSONString = false;
+        if (typeof str == 'string') {
+            try {
+                var obj= JSON.parse(str);
+                if (typeof obj == 'object' && obj) {
+                    isJSONString = true;
+                } else {
+                    isJSONString = false;
+                }
+            } catch(e) {
+                isJSONString = false;
+            }
+        }
+        if (isJSONString) {
+            return str;
+        } else {
+            return JSON.stringify(str);
+        }
+    }
+    
     
     mag = {
     VERSION:'2.0.0',
@@ -144,6 +165,17 @@
             bridge.callHandler('addRefreshComponent', '', function(rs){});
         });
         window.webkit.messageHandlers.addRefreshComponent.postMessage('');
+    },
+    setNavigationBarStyle:function (config) {
+        var configStr = MAGJSONStringify(config);
+        if (window.MagAndroidClient) {
+            window.MagAndroidClient.dialog(configStr);
+        }
+        iosConnect(function (bridge) {
+            bridge.callHandler('setNavigationBarStyle', configStr, function (rs) {
+            });
+        });
+        window.webkit.messageHandlers.setNavigationBarStyle.postMessage(configStr);
     }
     };
     window.mag = mag;

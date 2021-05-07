@@ -35,7 +35,8 @@
         make.edges.equalTo(self.view);
     }];
     self.webView = webView;
-//    NSURL *requestURL = [NSURL URLWithString:@"https://www.baidu.com"];
+//    NSString *link = @"https://www.minxiwang.com/plugin.php?id=xj_event&themecolor=ADEBB7&mag_allow_linkpreview=0";
+//    NSURL *requestURL = [NSURL URLWithString:link];
 //    NSURLRequest *request = [NSURLRequest requestWithURL:requestURL];
 //    [self.webView loadRequest:request];
     NSString *testBundlePath = [[NSBundle mainBundle] pathForResource:@"MWDEMO" ofType:@"bundle"];
@@ -46,7 +47,7 @@
     [self registerJavascriptBridge];
 }
 
-- (void)addRefreshComponent
+- (void)addRefreshComponent:(NSString *)json
 {
     __weak typeof(self)wself = self;
     self.webView.scrollView.mj_header = [MJRefreshNormalHeader headerWithRefreshingBlock:^{

@@ -90,7 +90,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  An array contains white schemes that does not internally intercept.
- Default contain @"http", @"https"，@"file"
+ Default contain @"http", @"https"
  customExternalHttpHosts > customWhiteSchemes > customExternalSchemes
  */
 @property (nonatomic, copy, readonly) NSArray<NSString *> *customWhiteSchemes;

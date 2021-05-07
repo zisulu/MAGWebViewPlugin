@@ -38,6 +38,12 @@
 			<key>handlerName</key>
 			<string>addRefreshComponent</string>
 		</dict>
+		<dict>
+			<key>name</key>
+			<string>setNavigationBarStyle</string>
+			<key>handlerName</key>
+			<string>setNavigationBarStyle:</string>
+		</dict>
 	</array>
 </dict>
 </plist>

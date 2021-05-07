@@ -53,13 +53,11 @@
             window.webkit.messageHandlers.getDeviceId.postMessage('');
         },
         addRefreshComponent: function (){
-            if (window.MagAndroidClient) {
-                window.MagAndroidClient.addRefreshComponent();
-            }
-            iosConnect(function(bridge){
-                bridge.callHandler('addRefreshComponent', '', function(rs){});
-            });
             window.webkit.messageHandlers.addRefreshComponent.postMessage('');
+        },
+        setNavigationBarStyle:function (config) {
+            var configStr = JSON.stringify(config);
+            window.webkit.messageHandlers.setNavigationBarStyle.postMessage(configStr);
         }
     };
     window.mag = mag;

@@ -227,6 +227,17 @@ static BOOL useWebViewJavascriptBridge = YES;
     }
 }
 
+- (void)setNavigationBarStyle:(NSString *)json
+{
+    NSLog(@"%@", json);
+    NSData *jsonData = [json dataUsingEncoding:NSUTF8StringEncoding];
+    NSError *error = nil;
+    id value = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:&error];
+    if (error) {
+        NSLog(@"jsonValueDecoded error:%@", error);
+    }
+}
+
 @end
 
 @implementation JSNativeService (WebLifeCycle)
