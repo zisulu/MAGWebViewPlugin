@@ -47,7 +47,7 @@
     [self registerJavascriptBridge];
 }
 
-- (void)addRefreshComponent:(NSString *)json
+- (void)addRefreshComponent
 {
     __weak typeof(self)wself = self;
     self.webView.scrollView.mj_header = [MJRefreshNormalHeader headerWithRefreshingBlock:^{
@@ -75,6 +75,7 @@
 - (void)dealloc
 {
     [self.jsService pageDestroy];
+    NSLog(@"[%@] dealloc", NSStringFromClass([self class]));
 }
 
 - (BOOL)webView:(id<MAGWebView>)webView shouldAllowWithRequest:(NSURLRequest *)request navigationType:(WKNavigationType)navigationType
@@ -166,24 +167,15 @@
     NSString *specialSchemePrefix = [NSString stringWithFormat:@"%@%@%@%@", @"i", @"t", @"m", @"s"];
     NSString *message = nil;
     if ([externalScheme hasPrefix:specialSchemePrefix]) {
-        if ([externalScheme isEqualToString:specialSchemePrefix]) {
-            message = [NSString stringWithFormat:@"即将离开「 %@ 」，打开「 iTunes 」", appName];
+        NSString *serviceSchemeSuffix = [NSString stringWithFormat:@"-%@%@%@%@", @"s", @"er", @"vic", @"es"];
+        if ([externalScheme containsString:serviceSchemeSuffix]) {
+            message = [NSString stringWithFormat:@"允许当前网页打开「 %@ 」应用？", externalScheme];
         } else {
-            NSString *appStoreSchemeSuffix = [NSString stringWithFormat:@"-%@%@%@%@", @"a", @"p", @"p", @"s"];
-            if ([externalScheme containsString:appStoreSchemeSuffix]) {
-                message = [NSString stringWithFormat:@"即将离开「 %@ 」，打开「 AppStore 」", appName];
-            } else {
-                message = [NSString stringWithFormat:@"允许当前网页打开「 %@ 」应用？", externalScheme];
-            }
+            message = [NSString stringWithFormat:@"即将离开「 %@ 」，打开「 AppStore 」", appName];
         }
     } else {
         if ([webView.configuration.customExternalHttpHosts containsObject:externalHost]) {
-            NSString *itunesHost = @"itunes.apple.com";
-            if ([externalHost isEqualToString:itunesHost]) {
-                message = [NSString stringWithFormat:@"即将离开「 %@ 」，打开「 iTunes 」", appName];
-            } else {
-                message = [NSString stringWithFormat:@"即将离开「 %@ 」，打开「 AppStore 」", appName];
-            }
+            message = [NSString stringWithFormat:@"即将离开「 %@ 」，打开「 AppStore 」", appName];
         } else {
             message = [NSString stringWithFormat:@"即将离开「 %@ 」，唤起其他应用", appName];
         }

@@ -44,6 +44,18 @@
 			<key>handlerName</key>
 			<string>setNavigationBarStyle:</string>
 		</dict>
+		<dict>
+			<key>name</key>
+			<string>consolelog</string>
+			<key>handlerName</key>
+			<string>consolelog:</string>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>previewImage</string>
+			<key>handlerName</key>
+			<string>previewImage:</string>
+		</dict>
 	</array>
 </dict>
 </plist>

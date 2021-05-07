@@ -6,26 +6,30 @@
         <meta name="format-detection" content="telephone=no">
             <link rel="stylesheet" href="./MWDEMO/mwdemo.css">
                 <script src="./MWDEMO/jquery-1.8.0.min.js"></script>
-                <script src="./MWDEMO/mwjs.js"></script>
+<!--                <script src="./MWDEMO/mwjs.js"></script>-->
+                <script src="./MWDEMO/mwjs-pure.js"></script>
 <!--                <script src="http://app.lxh.magcloud.cc/public/static/dest/js/libs/magjs-x.js"></script>-->
                 <script>
                     $(function(){
-<!--                        mag.ready(function(){-->
-<!--                            alert("js准备好了");-->
-<!--                            mag.addRefreshComponent();-->
-<!--                        });-->
+                        mag.ready(function(){
+                            mag.consolelog("js准备好了");
+                            mag.addRefreshComponent();
+                        });
                     });
                 </script>
                 <script type="text/javascript" charset="UTF-8" src="/templates/mobile_103/js/index.min.js"></script>
                 <script>
-<!--                    mag.setPageLife({-->
-<!--                        pageAppear: function(){-->
-<!--                            alert("页面出现了");-->
-<!--                        },-->
-<!--                        pageDisappear: function(){-->
-<!--                            -->
-<!--                        }-->
-<!--                    });-->
+                    mag.setPageLife({
+                        pageAppear: function(){
+                            mag.consolelog("页面出现了");
+                        },
+                        pageDisappear: function(){
+                            mag.consolelog("页面消失了");
+                        },
+                        pageDestroy: function(){
+                            mag.consolelog("页面销毁了");
+                        },
+                    });
                 </script>
                 <style type="text/css">.theme-font-color{color:#42BD56;}.theme-bg-color{ background-color:#42BD56;}.theme-border-color{ border-color:#42BD56;}</style>
 </head>
@@ -54,7 +58,6 @@
             });
         </script>
     </div>
-    
     <div class="api-item" id="settings">
         <p class="title">打开手机设置</p>
         <button class="magx-btn" id="settingButton">打开手机设置</button>
@@ -66,51 +69,28 @@
             });
         </script>
     </div>
-    
-    <div class="api-item" id="device">
-        <p class="title">获取设备号</p>
-        <button class="magx-btn" id="deviceIDButton">获取设备号</button>
-        <script>
-            $(function(){
-                $("#deviceIDButton").click(function () {
-                    mag.getDeviceId(function(rs){
-                        alert(JSON.stringify(rs));
-                    });
-                });
-            });
-        </script>
-    </div>
-    
     <div class="api-item" id="refresh">
         <p class="title">打开手机设置</p>
         <button class="magx-btn" id="refreshButton">添加下拉刷新</button>
         <script>
             $(function(){
                 $("#refreshButton").click(function () {
-                    mag.addRefreshComponent("saddsdadsa");
+                    mag.addRefreshComponent();
                 });
             });
         </script>
     </div>
     <div class="api-item" id="refresh">
-        <p class="title">测试导航栏js</p>
-        <button class="magx-btn" id="setNavigationBarStyleButton">测试导航栏js</button>
+        <p class="title">预览图片</p>
+        <button class="magx-btn" id="previewImageButton">预览图片</button>
         <script>
             $(function(){
-                $("#setNavigationBarStyleButton").click(function () {
-                    mag.setNavigationBarStyle(
-                                              JSON.stringify({
+                $("#previewImageButton").click(function () {
+                    mag.previewImage({
                         title:"你好",
                         content:"这是原生控件",
-                        buttons:["取消", "确定"],
-                        success:function () {
-                            alert("你点击了 确定 ");
-                        },
-                        cancel:function () {
-                            alert("你点击了 取消");
-                        }
+                        buttons:["取消", "确定"]
                     })
-                                              );
                 });
             });
         </script>

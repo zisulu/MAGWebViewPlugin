@@ -4,6 +4,11 @@
     }
     var mag = {
         VERSION:'1.0.0',
+        ready:function (fun) {
+            if(window.webkit.messageHandlers){
+                fun();
+            }
+        },
         callbacks: {},
         jsCallBack: function(id, val) {
             var callback = mag.callbacks[id];
@@ -41,6 +46,10 @@
                 type: '',
                 success: life.pageDisappear
             };
+            mag.callbacks.pageDestroy = {
+                type: '',
+                success: life.pageDestroy
+            };
         },
         showPhoneSettings: function() {
             window.webkit.messageHandlers.showPhoneSettings.postMessage('');
@@ -58,6 +67,13 @@
         setNavigationBarStyle:function (config) {
             var configStr = JSON.stringify(config);
             window.webkit.messageHandlers.setNavigationBarStyle.postMessage(configStr);
+        },
+        consolelog:function (config) {
+            window.webkit.messageHandlers.consolelog.postMessage(config);
+        },
+        previewImage:function (config) {
+            var configStr = JSON.stringify(config);
+            window.webkit.messageHandlers.previewImage.postMessage(configStr);
         }
     };
     window.mag = mag;

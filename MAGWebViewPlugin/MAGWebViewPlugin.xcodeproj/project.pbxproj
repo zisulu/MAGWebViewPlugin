@@ -20,8 +20,6 @@
 		583BBB07227EC0F3005D1199 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 583BBB06227EC0F3005D1199 /* WebKit.framework */; };
 		5852EE9424DD2C8800391784 /* JSNativeInterface.plist in Resources */ = {isa = PBXBuildFile; fileRef = 5852EE9224DD2C8800391784 /* JSNativeInterface.plist */; };
 		5852EE9524DD2C8800391784 /* JSNativeService.m in Sources */ = {isa = PBXBuildFile; fileRef = 5852EE9324DD2C8800391784 /* JSNativeService.m */; };
-		5852EE9724DD391300391784 /* mwjs-2.0.0.js in Resources */ = {isa = PBXBuildFile; fileRef = 5852EE9624DD391300391784 /* mwjs-2.0.0.js */; };
-		5852EE9924DD563100391784 /* mwjs-pure.js in Resources */ = {isa = PBXBuildFile; fileRef = 5852EE9824DD563100391784 /* mwjs-pure.js */; };
 		770CCF5970354D9DE527572D /* libPods-MAGWebViewPlugin.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0E84B1B2147D8768B6EDEC3C /* libPods-MAGWebViewPlugin.a */; };
 		F8077D2D24D6DE4A00983ACC /* MWDEMO.bundle in Resources */ = {isa = PBXBuildFile; fileRef = F8077D2C24D6DE4A00983ACC /* MWDEMO.bundle */; };
 /* End PBXBuildFile section */
@@ -70,8 +68,6 @@
 		5852EE9124DD2C8800391784 /* JSNativeService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JSNativeService.h; sourceTree = "<group>"; };
 		5852EE9224DD2C8800391784 /* JSNativeInterface.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = JSNativeInterface.plist; sourceTree = "<group>"; };
 		5852EE9324DD2C8800391784 /* JSNativeService.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JSNativeService.m; sourceTree = "<group>"; };
-		5852EE9624DD391300391784 /* mwjs-2.0.0.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "mwjs-2.0.0.js"; sourceTree = "<group>"; };
-		5852EE9824DD563100391784 /* mwjs-pure.js */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.javascript; path = "mwjs-pure.js"; sourceTree = "<group>"; };
 		921B4135B9AA8E590B8737C2 /* Pods-MAGWebViewPlugin.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MAGWebViewPlugin.debug.xcconfig"; path = "Target Support Files/Pods-MAGWebViewPlugin/Pods-MAGWebViewPlugin.debug.xcconfig"; sourceTree = "<group>"; };
 		ABC30753AEFE993406204E47 /* Pods-MAGWebViewPlugin.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MAGWebViewPlugin.release.xcconfig"; path = "Target Support Files/Pods-MAGWebViewPlugin/Pods-MAGWebViewPlugin.release.xcconfig"; sourceTree = "<group>"; };
 		F8077D2C24D6DE4A00983ACC /* MWDEMO.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = MWDEMO.bundle; sourceTree = "<group>"; };
@@ -206,8 +202,6 @@
 				5852EE9224DD2C8800391784 /* JSNativeInterface.plist */,
 				5852EE9124DD2C8800391784 /* JSNativeService.h */,
 				5852EE9324DD2C8800391784 /* JSNativeService.m */,
-				5852EE9824DD563100391784 /* mwjs-pure.js */,
-				5852EE9624DD391300391784 /* mwjs-2.0.0.js */,
 				F8077D2C24D6DE4A00983ACC /* MWDEMO.bundle */,
 			);
 			path = Resource;
@@ -319,9 +313,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F8077D2D24D6DE4A00983ACC /* MWDEMO.bundle in Resources */,
-				5852EE9924DD563100391784 /* mwjs-pure.js in Resources */,
 				583BBAD4227E8C01005D1199 /* LaunchScreen.storyboard in Resources */,
-				5852EE9724DD391300391784 /* mwjs-2.0.0.js in Resources */,
 				5852EE9424DD2C8800391784 /* JSNativeInterface.plist in Resources */,
 				583BBAD1227E8C01005D1199 /* Assets.xcassets in Resources */,
 			);

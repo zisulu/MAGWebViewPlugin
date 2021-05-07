@@ -10,11 +10,25 @@
 #import "MAGWebView.h"
 #import <WebViewJavascriptBridge/WebViewJavascriptBridge.h>
 
-static BOOL useWebViewJavascriptBridge = YES;
+//static BOOL useWebViewJavascriptBridge = NO;
+
+id jsonObject(NSString *json)
+{
+    NSLog(@"%@", json);
+    NSData *jsonData = [json dataUsingEncoding:NSUTF8StringEncoding];
+    NSError *error = nil;
+    id value = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:&error];
+    if (error) {
+        NSLog(@"jsonValueDecoded error:%@", error);
+    } else {
+        NSLog(@"jsonValueDecoded success:%@", value);
+    }
+    return value;
+}
 
 @interface JSNativeService ()
 
-@property (nonatomic, weak) WKWebView *webView;
+@property (nonatomic, strong) WKWebView *webView;
 @property (nonatomic, weak) __kindof UIViewController *context;
 
 @property (nonatomic, copy) NSArray *interfaceList;
@@ -47,11 +61,16 @@ static BOOL useWebViewJavascriptBridge = YES;
 
 - (void)dealloc
 {
+    NSLog(@"[%@] dealloc", NSStringFromClass([JSNativeService class]));
     [self unregisterAllJSHandlers];
 }
 
 - (void)registerAllJSHandlers
 {
+    if (!self.webView) {
+        return;
+    }
+    NSLog(@"注册js方法");
     WKUserContentController *userContentController = self.webView.configuration.userContentController;
     [userContentController mag_addScriptAtDocumentStart:self.injectedScript];
     for (NSDictionary *aFunction in self.interfaceList) {
@@ -62,6 +81,10 @@ static BOOL useWebViewJavascriptBridge = YES;
 
 - (void)unregisterAllJSHandlers
 {
+    if (!self.webView) {
+        return;
+    }
+    NSLog(@"注销js方法");
     WKUserContentController *userContentController = self.webView.configuration.userContentController;
     [userContentController removeAllUserScripts];
     for (NSDictionary *aFunction in self.interfaceList) {
@@ -82,18 +105,7 @@ static BOOL useWebViewJavascriptBridge = YES;
     JSNativeService *service = [[JSNativeService alloc] init];
     service.webView = webView;
     service.context = context;
-    if (useWebViewJavascriptBridge) {
-        service.jsBridge = [WebViewJavascriptBridge bridgeForWebView:webView];
-        for (NSDictionary *aFunction in service.interfaceList) {
-            NSString *functionName = aFunction[@"name"];
-            __block JSNativeService *weakService = service;
-            [service.jsBridge registerHandler:functionName handler:^(id data, WVJBResponseCallback responseCallback) {
-                [weakService onReceiveJsCall:functionName data:data];
-            }];
-        }
-    } else {
-        [service registerAllJSHandlers];
-    }
+    [service registerAllJSHandlers];
     return service;
 }
 
@@ -122,6 +134,11 @@ static BOOL useWebViewJavascriptBridge = YES;
 
 - (void)callHandler:(NSString *)handler data:(NSString *)data
 {
+    [self callHandler:handler data:data completionHandler:nil];
+}
+
+- (void)callHandler:(NSString *)handler data:(NSString *)data completionHandler:(void (^)(id result, NSError * error))completionHandler;
+{
     if (!data) data = @"";
     NSDictionary *returnData = @{
         @"id" : handler,
@@ -136,14 +153,13 @@ static BOOL useWebViewJavascriptBridge = YES;
         }
         result = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
     }
-    if (useWebViewJavascriptBridge) {
-        [self.jsBridge callHandler:@"jsCallBack" data:result];
-    } else {
-        NSString *callbackJS = [NSString stringWithFormat:@"window.mag.jsCallBack('%@','%@')", handler, data];
-        [self.webView evaluateJavaScript:callbackJS completionHandler:^(id _Nullable result, NSError * _Nullable error) {
-            NSLog(@"%@", error);
-        }];
-    }
+    NSString *callbackJS = [NSString stringWithFormat:@"window.mag.jsCallBack('%@','%@')", handler, data];
+    [self.webView evaluateJavaScript:callbackJS completionHandler:^(id _Nullable result, NSError * _Nullable error) {
+        NSLog(@"\n result:%@\n error:%@", result, error);
+        if (completionHandler) {
+            completionHandler(result, error);
+        }
+    }];
 }
 
 - (void)callHandler:(NSString *)handler jsCallback:(NSString *)jsCallback data:(NSString *)data
@@ -229,13 +245,18 @@ static BOOL useWebViewJavascriptBridge = YES;
 
 - (void)setNavigationBarStyle:(NSString *)json
 {
-    NSLog(@"%@", json);
-    NSData *jsonData = [json dataUsingEncoding:NSUTF8StringEncoding];
-    NSError *error = nil;
-    id value = [NSJSONSerialization JSONObjectWithData:jsonData options:kNilOptions error:&error];
-    if (error) {
-        NSLog(@"jsonValueDecoded error:%@", error);
-    }
+    jsonObject(json);
+}
+
+- (void)consolelog:(NSString *)text
+{
+    NSLog(@"js call consolelog:%@", text);
+}
+
+- (void)previewImage:(NSString *)json
+{
+    NSDictionary *data = jsonObject(json);
+    NSLog(@"previewImage:%@", data);
 }
 
 @end
@@ -254,7 +275,12 @@ static BOOL useWebViewJavascriptBridge = YES;
 
 - (void)pageDestroy
 {
-    [self callHandler:@"pageDestroy" data:nil];
+    __weak typeof(self)wself = self;
+    [self callHandler:@"pageDestroy" data:nil completionHandler:^(id result, NSError *error) {
+        __strong typeof(wself)sself = wself;
+        [sself unregisterAllJSHandlers];
+        sself.webView = nil;
+    }];
 }
 
 @end

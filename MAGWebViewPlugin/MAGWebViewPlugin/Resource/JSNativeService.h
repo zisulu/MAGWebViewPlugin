@@ -10,10 +10,11 @@
 #import <UIKit/UIKit.h>
 #import <WebKit/WebKit.h>
 
+NS_ASSUME_NONNULL_BEGIN
+
 @interface JSNativeService : NSObject <WKScriptMessageHandler>
 
 + (JSNativeService *)doJSRegistry:(WKWebView *)webView context:(__kindof UIViewController *)context;
-
 @end
 
 @interface JSNativeService (WebLifeCycle)
@@ -24,6 +25,7 @@
 
 @end
 
+NS_ASSUME_NONNULL_END
 
 
 

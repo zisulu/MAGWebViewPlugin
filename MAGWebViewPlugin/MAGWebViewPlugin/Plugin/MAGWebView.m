@@ -464,7 +464,7 @@ dispatch_async(dispatch_get_main_queue(), block);\
 - (BOOL)internal_webViewCanOpenRequestURL:(NSURL *)requestURL
 {
     BOOL result = NO;
-    if (requestURL) {
+    if (requestURL && ![requestURL isFileURL]) {
         NSString *requestScheme = requestURL.scheme;
         NSString *requestHost = requestURL.host;
         if (requestScheme.length > 0) {
