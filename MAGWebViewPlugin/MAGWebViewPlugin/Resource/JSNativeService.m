@@ -26,6 +26,20 @@ id jsonObject(NSString *json)
     return value;
 }
 
+NSString *jsonPresentation(id object)
+{
+    NSString *result = nil;
+    if ([NSJSONSerialization isValidJSONObject:object]) {
+        NSError *error = nil;
+        NSData *data = [NSJSONSerialization dataWithJSONObject:object options:0 error:&error];
+        if (error) {
+            NSLog(@"%@", error);
+        }
+        result = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+    }
+    return result;
+}
+
 @interface JSNativeService ()
 
 @property (nonatomic, strong) WKWebView *webView;
@@ -52,7 +66,9 @@ id jsonObject(NSString *json)
         NSArray *interfaceList = configData[@"list"];
         self.interfaceList = interfaceList;
 //        NSString *jsPath = [[NSBundle mainBundle] pathForResource:@"mwjs-2.0.0" ofType:@"js"];
-        NSString *jsPath = [[NSBundle mainBundle] pathForResource:@"mwjs-pure" ofType:@"js"];
+        NSString *testBundlePath = [[NSBundle mainBundle] pathForResource:@"MWDEMO" ofType:@"bundle"];
+        NSBundle *testBundle = [NSBundle bundleWithPath:testBundlePath];
+        NSString *jsPath = [testBundle pathForResource:@"MWDEMO/mwjs-pure" ofType:@"js"];
         NSString *injectedScript = [[NSString alloc] initWithContentsOfFile:jsPath encoding:NSUTF8StringEncoding error:nil];
         self.injectedScript = injectedScript;
     }
@@ -238,6 +254,7 @@ id jsonObject(NSString *json)
 
 - (void)addRefreshComponent
 {
+    NSLog(@"addRefreshComponent");
     if ([self.context respondsToSelector:@selector(addRefreshComponent)]) {
         [self.context performSelector:@selector(addRefreshComponent)];
     }
@@ -248,15 +265,44 @@ id jsonObject(NSString *json)
     jsonObject(json);
 }
 
-- (void)consolelog:(NSString *)text
+- (void)showToast:(NSString *)text
 {
-    NSLog(@"js call consolelog:%@", text);
+    NSLog(@"js call toast:%@", text);
+}
+
+- (void)doReport:(NSString *)json
+{
+    NSDictionary *data = jsonObject(json);
+    NSLog(@"doReport:%@", data);
 }
 
 - (void)previewImage:(NSString *)json
 {
     NSDictionary *data = jsonObject(json);
     NSLog(@"previewImage:%@", data);
+}
+
+- (void)doComment:(NSString *)json
+{
+    NSDictionary *data = jsonObject(json);
+    NSLog(@"doComment:%@", data);
+    NSDictionary *callbackData = @{
+        @"content" : @"这是一条评论"
+    };
+    [self callHandler:@"comment" data:jsonPresentation(callbackData)];
+}
+
+- (void)showCommentDetail:(NSString *)json
+{
+    NSDictionary *data = jsonObject(json);
+    NSLog(@"showCommentDetail:%@", data);
+}
+
+- (void)showCommentMoreAction:(NSString *)json
+{
+    NSDictionary *data = jsonObject(json);
+    NSLog(@"showCommentMoreAction:%@", data);
+    [self callHandler:@"showCommentMoreAction" data:@"1"];
 }
 
 @end

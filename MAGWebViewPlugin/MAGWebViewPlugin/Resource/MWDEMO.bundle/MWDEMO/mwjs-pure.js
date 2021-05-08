@@ -68,13 +68,63 @@
             var configStr = JSON.stringify(config);
             window.webkit.messageHandlers.setNavigationBarStyle.postMessage(configStr);
         },
-        consolelog:function (config) {
-            window.webkit.messageHandlers.consolelog.postMessage(config);
-        },
-        previewImage:function (config) {
-            var configStr = JSON.stringify(config);
-            window.webkit.messageHandlers.previewImage.postMessage(configStr);
-        }
+        // toast
+            toast: function (text) {
+              if (window.xiciAndroidClient) {
+                window.xiciAndroidClient.toast(text);
+              }
+              window.webkit.messageHandlers.toast.postMessage(text);
+            },
+        // 举报
+            report: function (config) {
+              var configStr = JSON.stringify(config);
+              if (window.xiciAndroidClient) {
+                window.xiciAndroidClient.report(configStr);
+              }
+              window.webkit.messageHandlers.report.postMessage(configStr);
+            },
+            // 预览图片
+            previewImage: function (config) {
+              var configStr = JSON.stringify(config);
+              if (window.xiciAndroidClient) {
+                window.xiciAndroidClient.previewImage(configStr);
+              }
+              window.webkit.messageHandlers.previewImage.postMessage(configStr);
+            },
+            // 评论
+            comment: function (config, fun) {
+              if (!fun) return;
+              mag.callbacks.comment = {
+                type: "json",
+                success: fun,
+              };
+              var configStr = JSON.stringify(config);
+              if (window.xiciAndroidClient) {
+                window.xiciAndroidClient.comment(configStr);
+              }
+              window.webkit.messageHandlers.comment.postMessage(configStr);
+            },
+            // 显示楼中楼详情
+            showCommentDetail: function (config) {
+              var configStr = JSON.stringify(config);
+              if (window.xiciAndroidClient) {
+                window.xiciAndroidClient.showCommentDetail(configStr);
+              }
+              window.webkit.messageHandlers.showCommentDetail.postMessage(configStr);
+            },
+            // 显示评论更多操作
+            showCommentMoreAction: function (config, fun) {
+              if (!fun) return;
+              mag.callbacks.showCommentMoreAction = {
+                type: "json",
+                success: fun,
+              };
+              var configStr = JSON.stringify(config);
+              if (window.xiciAndroidClient) {
+                window.xiciAndroidClient.showCommentMoreAction(configStr);
+              }
+            window.webkit.messageHandlers.showCommentMoreAction.postMessage(configStr);
+            },
     };
     window.mag = mag;
 })();

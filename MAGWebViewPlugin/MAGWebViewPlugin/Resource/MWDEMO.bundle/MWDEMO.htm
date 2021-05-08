@@ -12,7 +12,7 @@
                 <script>
                     $(function(){
                         mag.ready(function(){
-                            mag.consolelog("js准备好了");
+                            mag.toast("js准备好了");
                             mag.addRefreshComponent();
                         });
                     });
@@ -21,13 +21,13 @@
                 <script>
                     mag.setPageLife({
                         pageAppear: function(){
-                            mag.consolelog("页面出现了");
+                            mag.toast("页面出现了");
                         },
                         pageDisappear: function(){
-                            mag.consolelog("页面消失了");
+                            mag.toast("页面消失了");
                         },
                         pageDestroy: function(){
-                            mag.consolelog("页面销毁了");
+                            mag.toast("页面销毁了");
                         },
                     });
                 </script>
@@ -80,7 +80,7 @@
             });
         </script>
     </div>
-    <div class="api-item" id="refresh">
+    <div class="api-item" id="previewImage">
         <p class="title">预览图片</p>
         <button class="magx-btn" id="previewImageButton">预览图片</button>
         <script>
@@ -89,8 +89,90 @@
                     mag.previewImage({
                         title:"你好",
                         content:"这是原生控件",
-                        buttons:["取消", "确定"]
-                    })
+                        buttons:["取消", "确定"],
+                        success:function () {
+                            alert("你点击了 确定 ");
+                        },
+                        cancel:function () {
+                            alert("你点击了 取消");
+                        }
+                    });
+                });
+            });
+        </script>
+    </div>
+    <div class="api-item" id="report">
+        <p class="title">report</p>
+        <button class="magx-btn" id="reportButton">report</button>
+        <script>
+            $(function(){
+                $("#reportButton").click(function () {
+                    mag.report({
+                      type: "comment",
+                      content: {
+                        comment: "评论内容",
+                        comment_id: "评论id",
+                        post_id: "内容id",
+                        user_id: "被举报的用户id",
+                        nickname: "被举报的用户昵称"
+                      },
+                    });
+                });
+            });
+        </script>
+    </div>
+    <div class="api-item" id="comment">
+        <p class="title">comment</p>
+        <button class="magx-btn" id="commentButton">comment</button>
+        <script>
+            $(function(){
+                $("#commentButton").click(function () {
+                    mag.comment({
+                        hint: "回复xxx:",
+                      },
+                      function (res) {
+                        mag.toast(res);
+                      }
+                    );
+                });
+            });
+        </script>
+    </div>
+    <div class="api-item" id="showCommentMoreAction">
+        <p class="title">showCommentMoreAction</p>
+        <button class="magx-btn" id="showCommentMoreActionButton">showCommentMoreAction</button>
+        <script>
+            $(function(){
+                $("#showCommentMoreActionButton").click(function () {
+                    mag.showCommentMoreAction({
+                        userName: "用户名",
+                        description: "描述",
+                      },
+                      function (index) {
+                        if (index == 0) {
+                            mag.report({
+                              type: "comment",
+                              content: {
+                                comment: "评论内容",
+                                comment_id: "评论id",
+                                post_id: "内容id",
+                                user_id: "被举报的用户id",
+                                nickname: "被举报的用户昵称"
+                              },
+                            });
+                        } else if (index == 1) {
+                            mag.toast("你选中了点赞");
+                        } else if (index == 2) {
+                            mag.comment({
+                                hint: "回复xxx:",
+                              },
+                              function (res) {
+                                mag.toast(res);
+                              }
+                            );
+                        }
+                      }
+                    );
                 });
             });
         </script>

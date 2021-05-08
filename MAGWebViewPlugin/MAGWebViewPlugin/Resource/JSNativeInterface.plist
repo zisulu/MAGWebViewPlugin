@@ -46,15 +46,39 @@
 		</dict>
 		<dict>
 			<key>name</key>
-			<string>consolelog</string>
+			<string>toast</string>
 			<key>handlerName</key>
-			<string>consolelog:</string>
+			<string>showToast:</string>
 		</dict>
 		<dict>
 			<key>name</key>
 			<string>previewImage</string>
 			<key>handlerName</key>
 			<string>previewImage:</string>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>report</string>
+			<key>handlerName</key>
+			<string>doReport:</string>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>comment</string>
+			<key>handlerName</key>
+			<string>doComment:</string>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>showCommentDetail</string>
+			<key>handlerName</key>
+			<string>showCommentDetail:</string>
+		</dict>
+		<dict>
+			<key>name</key>
+			<string>showCommentMoreAction</string>
+			<key>handlerName</key>
+			<string>showCommentMoreAction:</string>
 		</dict>
 	</array>
 </dict>
